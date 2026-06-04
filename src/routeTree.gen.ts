@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as FindingsRouteImport } from './routes/findings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions.index'
 import { Route as SessionsNewRouteImport } from './routes/sessions.new'
 import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FindingsRoute = FindingsRouteImport.update({
   id: '/findings',
   path: '/findings',
@@ -44,6 +50,7 @@ const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/findings': typeof FindingsRoute
+  '/reports': typeof ReportsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/findings': typeof FindingsRoute
+  '/reports': typeof ReportsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions': typeof SessionsIndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/findings': typeof FindingsRoute
+  '/reports': typeof ReportsRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
@@ -68,15 +77,23 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/findings'
+    | '/reports'
     | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/findings' | '/sessions/$sessionId' | '/sessions/new' | '/sessions'
+  to:
+    | '/'
+    | '/findings'
+    | '/reports'
+    | '/sessions/$sessionId'
+    | '/sessions/new'
+    | '/sessions'
   id:
     | '__root__'
     | '/'
     | '/findings'
+    | '/reports'
     | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
@@ -85,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FindingsRoute: typeof FindingsRoute
+  ReportsRoute: typeof ReportsRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   SessionsNewRoute: typeof SessionsNewRoute
   SessionsIndexRoute: typeof SessionsIndexRoute
@@ -92,6 +110,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/findings': {
       id: '/findings'
       path: '/findings'
@@ -133,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FindingsRoute: FindingsRoute,
+  ReportsRoute: ReportsRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   SessionsNewRoute: SessionsNewRoute,
   SessionsIndexRoute: SessionsIndexRoute,
