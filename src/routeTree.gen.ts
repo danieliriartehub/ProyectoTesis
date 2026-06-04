@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as FindingsRouteImport } from './routes/findings'
@@ -21,6 +22,11 @@ import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessio
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/findings'
     | '/jobs'
     | '/reports'
+    | '/settings'
     | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/findings'
     | '/jobs'
     | '/reports'
+    | '/settings'
     | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/findings'
     | '/jobs'
     | '/reports'
+    | '/settings'
     | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   FindingsRoute: typeof FindingsRoute
   JobsRoute: typeof JobsRoute
   ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
   TeamRoute: typeof TeamRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   SessionsNewRoute: typeof SessionsNewRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   FindingsRoute: FindingsRoute,
   JobsRoute: JobsRoute,
   ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
   TeamRoute: TeamRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   SessionsNewRoute: SessionsNewRoute,
