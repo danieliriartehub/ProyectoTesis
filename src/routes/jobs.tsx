@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { analysisJobs, sessions } from "@/lib/mocks";
 import { JobStatusBadge } from "@/components/badges";
+import { useSessions, useAllJobs } from "@/lib/queries";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({ meta: [{ title: "Procesamiento IA — InfraInspect AI" }] }),
@@ -11,11 +11,19 @@ export const Route = createFileRoute("/jobs")({
 });
 
 function JobsPage() {
+  const { data: sessionsData } = useSessions({ limit: 200 });
+  const sessions = sessionsData?.items ?? [];
+  const sessionIds = sessions.map((s) => s.id);
+  const { data: analysisJobs = [], isLoading } = useAllJobs(sessionIds);
+
   const sessionMap = Object.fromEntries(sessions.map((s) => [s.id, s]));
+
   return (
     <div className="p-6 space-y-6">
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Pipeline de inferencia</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Pipeline de inferencia · auto-refresh cada 5s
+        </p>
         <h1 className="text-3xl font-bold tracking-tight mt-1">Procesamiento IA</h1>
       </div>
 
@@ -36,22 +44,25 @@ function JobsPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="font-mono uppercase text-[10px] tracking-widest">Job</TableHead>
-              <TableHead className="font-mono uppercase text-[10px] tracking-widest">Modelo</TableHead>
+              <TableHead className="font-mono uppercase text-[10px] tracking-widest">Modelo IA</TableHead>
               <TableHead className="font-mono uppercase text-[10px] tracking-widest">Sesión</TableHead>
               <TableHead className="font-mono uppercase text-[10px] tracking-widest">Estado</TableHead>
               <TableHead className="font-mono uppercase text-[10px] tracking-widest">Progreso</TableHead>
               <TableHead className="font-mono uppercase text-[10px] tracking-widest text-right">Hallazgos</TableHead>
-              <TableHead className="font-mono uppercase text-[10px] tracking-widest">Tiempo</TableHead>
+              <TableHead className="font-mono uppercase text-[10px] tracking-widest">Tiempo inferencia</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {analysisJobs.map((j) => {
+            {isLoading && (
+              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Cargando jobs…</TableCell></TableRow>
+            )}
+            {!isLoading && analysisJobs.map((j) => {
               const s = sessionMap[j.sessionId];
               return (
                 <TableRow key={j.id}>
-                  <TableCell className="font-mono text-xs">{j.id}</TableCell>
+                  <TableCell className="font-mono text-xs">{j.id.slice(0, 8)}…</TableCell>
                   <TableCell className="font-mono text-xs">{j.model}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{s?.code}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{s?.code ?? j.sessionId.slice(0, 8)}</TableCell>
                   <TableCell><JobStatusBadge status={j.status} /></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-[120px]">
@@ -66,6 +77,9 @@ function JobsPage() {
                 </TableRow>
               );
             })}
+            {!isLoading && analysisJobs.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Sin jobs registrados</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </Card>

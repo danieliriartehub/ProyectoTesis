@@ -7,9 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { findings, sessions } from "@/lib/mocks";
 import { SeverityBadge, FindingStatusBadge } from "@/components/badges";
 import type { Severity, FindingStatus } from "@/types";
+import { useFindings, useSessions } from "@/lib/queries";
 
 export const Route = createFileRoute("/findings")({
   head: () => ({ meta: [{ title: "Hallazgos — InfraInspect AI" }] }),
@@ -20,6 +20,10 @@ function FindingsPage() {
   const [q, setQ] = useState("");
   const [sev, setSev] = useState<Severity | "all">("all");
   const [status, setStatus] = useState<FindingStatus | "all">("all");
+
+  const { data: findings = [], isLoading: loadingFindings } = useFindings();
+  const { data: sessionsData } = useSessions({ limit: 200 });
+  const sessions = sessionsData?.items ?? [];
 
   const filtered = findings.filter((f) => {
     const matchQ = !q || f.category.toLowerCase().includes(q.toLowerCase()) || f.description.toLowerCase().includes(q.toLowerCase());
@@ -82,7 +86,10 @@ function FindingsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((f) => {
+            {loadingFindings && (
+              <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Cargando hallazgos…</TableCell></TableRow>
+            )}
+            {!loadingFindings && filtered.map((f) => {
               const s = sessionMap[f.sessionId];
               return (
                 <TableRow key={f.id}>
@@ -105,7 +112,7 @@ function FindingsPage() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && (
+            {!loadingFindings && filtered.length === 0 && (
               <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Sin hallazgos</TableCell></TableRow>
             )}
           </TableBody>

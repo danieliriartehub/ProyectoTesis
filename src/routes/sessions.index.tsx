@@ -13,9 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { sessions } from "@/lib/mocks";
 import { SessionStatusBadge } from "@/components/badges";
 import type { SessionStatus } from "@/types";
+import { useSessions } from "@/lib/queries";
 
 export const Route = createFileRoute("/sessions/")({
   head: () => ({ meta: [{ title: "Sesiones de inspección — InfraInspect AI" }] }),
@@ -28,6 +28,9 @@ function SessionsList() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<SessionStatus | "all">("all");
   const [type, setType] = useState<string>("all");
+
+  const { data, isLoading } = useSessions({ limit: 200 });
+  const sessions = data?.items ?? [];
 
   const filtered = sessions.filter((s) => {
     const matchesQ =
@@ -111,7 +114,14 @@ function SessionsList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((s) => (
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                  Cargando sesiones…
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && filtered.map((s) => (
               <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30">
                 <TableCell className="font-mono text-xs text-muted-foreground">
                   <Link to="/sessions/$sessionId" params={{ sessionId: s.id }} className="block">
@@ -145,7 +155,7 @@ function SessionsList() {
                 </TableCell>
               </TableRow>
             ))}
-            {filtered.length === 0 && (
+            {!isLoading && filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   Sin resultados con los filtros actuales

@@ -24,10 +24,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { sessions, findings, reports, analysisJobs } from "@/lib/mocks";
 import { SessionStatusBadge, SeverityBadge } from "@/components/badges";
+import { useSessions, useFindings, useAllJobs } from "@/lib/queries";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(({
   head: () => ({
     meta: [
       { title: "Dashboard — InfraInspect AI" },
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: Dashboard,
-});
+}) as ReturnType<typeof createFileRoute>);
 
 const trendData = [
   { day: "Vie", findings: 12, critical: 1 },
@@ -48,17 +48,25 @@ const trendData = [
 ];
 
 function Dashboard() {
+  const { data: sessionsData } = useSessions({ limit: 100 });
+  const { data: findingsData } = useFindings();
+
+  const sessions = sessionsData?.items ?? [];
+  const findings = findingsData ?? [];
+
+  const sessionIds = sessions.map((s) => s.id);
+  const { data: allJobs = [] } = useAllJobs(sessionIds);
+
   const activeSessions = sessions.filter((s) =>
     ["Capturing", "Processing", "Review"].includes(s.status),
   );
-  const totalFindings = findings.length;
   const critical = findings.filter((f) => f.severity === "critical").length;
   const high = findings.filter((f) => f.severity === "high").length;
   const medium = findings.filter((f) => f.severity === "medium").length;
   const low = findings.filter((f) => f.severity === "low").length;
   const info = findings.filter((f) => f.severity === "info").length;
-  const runningJobs = analysisJobs.filter((j) => j.status === "running").length;
-  const queuedJobs = analysisJobs.filter((j) => j.status === "queued").length;
+  const runningJobs = allJobs.filter((j) => j.status === "running").length;
+  const queuedJobs = allJobs.filter((j) => j.status === "queued").length;
 
   const severityData = [
     { name: "Crítico", value: critical, color: "var(--severity-critical)" },
@@ -94,15 +102,13 @@ function Dashboard() {
           label="Inspecciones activas"
           value={activeSessions.length}
           hint={`${sessions.length} totales`}
-          trend="+2 vs semana"
         />
         <KpiCard
           icon={AlertTriangle}
           label="Hallazgos detectados"
-          value={totalFindings}
+          value={findings.length}
           hint={`${critical} críticos`}
           accent="critical"
-          trend="+17%"
         />
         <KpiCard
           icon={Cpu}
@@ -113,10 +119,9 @@ function Dashboard() {
         />
         <KpiCard
           icon={FileCheck}
-          label="Reportes generados"
-          value={reports.length}
-          hint={`${reports.filter((r) => r.status === "signed").length} firmados`}
-          trend="↑ MTD"
+          label="Sesiones completadas"
+          value={sessions.filter((s) => s.status === "Completed").length}
+          hint={`${sessions.length} totales`}
         />
       </div>
 
@@ -129,9 +134,9 @@ function Dashboard() {
                 Hallazgos · últimos 7 días
               </CardTitle>
               <div className="mt-2 flex items-baseline gap-3">
-                <span className="text-3xl font-bold font-mono">163</span>
+                <span className="text-3xl font-bold font-mono">{findings.length}</span>
                 <span className="text-xs text-severity-low flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> +24%
+                  <TrendingUp className="h-3 w-3" /> en tiempo real
                 </span>
               </div>
             </div>
@@ -199,104 +204,78 @@ function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Active sessions */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
-              Inspecciones activas
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/sessions" className="font-mono text-xs uppercase tracking-wider">
-                Ver todas <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {activeSessions.map((s) => (
-              <Link
-                key={s.id}
-                to="/sessions/$sessionId"
-                params={{ sessionId: s.id }}
-                className="block rounded border border-border p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-muted-foreground">{s.code}</span>
-                      <SessionStatusBadge status={s.status} />
-                    </div>
-                    <h3 className="font-semibold mt-1 truncate">{s.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {s.infrastructure.type} · {s.infrastructure.location}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-mono text-2xl font-bold">{s.progress}%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                      {s.evidenceCount} evidencias · {s.findingsCount} hallazgos
-                    </div>
-                  </div>
-                </div>
-                <Progress value={s.progress} className="mt-3 h-1" />
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* AI processing */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Activity className="h-3.5 w-3.5" /> Estado IA
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {analysisJobs.slice(0, 5).map((j) => (
-              <div key={j.id} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono">{j.model}</span>
-                  <span className="text-muted-foreground">{j.progress}%</span>
-                </div>
-                <Progress value={j.progress} className="h-1" />
-                <div className="font-mono text-[10px] uppercase text-muted-foreground">
-                  {j.status} · {j.findingsProduced} hallazgos
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Latest reports */}
+      {/* Active sessions */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
-            Últimos reportes
+            Inspecciones activas
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/reports" className="font-mono text-xs uppercase tracking-wider">
-              Ver todos <ArrowUpRight className="h-3 w-3" />
+            <Link to="/sessions" className="font-mono text-xs uppercase tracking-wider">
+              Ver todas <ArrowUpRight className="h-3 w-3" />
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-3">
-            {reports.map((r) => (
-              <div key={r.id} className="rounded border border-border p-3 hover:border-primary/40 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[11px] text-muted-foreground">{r.code}</span>
-                  <SeverityBadge severity={r.status === "draft" ? "medium" : "low"} />
+        <CardContent className="space-y-3">
+          {activeSessions.slice(0, 5).map((s) => (
+            <Link
+              key={s.id}
+              to="/sessions/$sessionId"
+              params={{ sessionId: s.id }}
+              className="block rounded border border-border p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] text-muted-foreground">{s.code}</span>
+                    <SessionStatusBadge status={s.status} />
+                  </div>
+                  <h3 className="font-semibold mt-1 truncate">{s.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {s.infrastructure.type} · {s.infrastructure.location}
+                  </p>
                 </div>
-                <h3 className="font-semibold mt-2 text-sm leading-tight">{r.title}</h3>
-                <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.summary}</p>
-                <div className="mt-3 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                  <span>{r.pages} págs</span>
-                  <span>{new Date(r.generatedAt).toLocaleDateString("es-PE")}</span>
+                <div className="text-right shrink-0">
+                  <div className="font-mono text-2xl font-bold">{s.progress}%</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    {s.evidenceCount} evidencias · {s.findingsCount} hallazgos
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+              <Progress value={s.progress} className="mt-3 h-1" />
+            </Link>
+          ))}
+          {activeSessions.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No hay inspecciones activas
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* AI Jobs status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Activity className="h-3.5 w-3.5" /> Estado IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {allJobs.slice(0, 5).map((j) => (
+            <div key={j.id} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono">{j.model}</span>
+                <span className="text-muted-foreground">{j.progress}%</span>
+              </div>
+              <Progress value={j.progress} className="h-1" />
+              <div className="font-mono text-[10px] uppercase text-muted-foreground">
+                {j.status} · {j.findingsProduced} hallazgos
+              </div>
+            </div>
+          ))}
+          {allJobs.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">Sin jobs activos</p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -337,9 +316,7 @@ function KpiCard({
           <span className="text-3xl font-bold font-mono">{value}</span>
           {trend && <span className="text-xs text-severity-low">{trend}</span>}
         </div>
-        {hint && (
-          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-        )}
+        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );
