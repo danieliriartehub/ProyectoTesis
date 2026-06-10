@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -119,22 +120,30 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isLogin = pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <AppHeader />
-              <main className="flex-1 min-w-0">
-                <Outlet />
-              </main>
+        {isLogin ? (
+          <main className="min-h-screen w-full bg-background">
+            <Outlet />
+          </main>
+        ) : (
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full bg-background">
+              <AppSidebar />
+              <div className="flex-1 flex flex-col min-w-0">
+                <AppHeader />
+                <main className="flex-1 min-w-0">
+                  <Outlet />
+                </main>
+              </div>
             </div>
-          </div>
-          <Toaster />
-        </SidebarProvider>
+          </SidebarProvider>
+        )}
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -18,9 +18,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuItem,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useMe } from "@/lib/queries";
 
 const nav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -37,6 +39,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: me } = useMe();
 
   const isActive = (url: string) =>
     url === "/" ? pathname === "/" : pathname.startsWith(url);
@@ -144,17 +147,21 @@ export function AppSidebar() {
 
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} pt-2`}>
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
-              AT
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+              {me?.full_name?.[0]?.toUpperCase() || me?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             {!collapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-white leading-tight">Arq. Torres</span>
-                <span className="text-xs text-muted-foreground leading-tight">Administrador</span>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold text-white leading-tight truncate">
+                  {me?.full_name || 'Usuario'}
+                </span>
+                <span className="text-xs text-muted-foreground leading-tight truncate">
+                  {me?.role === "admin" ? "Administrador" : "Inspector"}
+                </span>
               </div>
             )}
           </div>
-          {!collapsed && <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          {!collapsed && <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
         </div>
       </SidebarFooter>
     </Sidebar>

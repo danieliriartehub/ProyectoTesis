@@ -3,10 +3,11 @@ import { Bell, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@tanstack/react-router";
-import { currentUser } from "@/lib/mocks";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useMe } from "@/lib/queries";
 
 export function AppHeader() {
+  const { data: me } = useMe();
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
       <SidebarTrigger className="text-muted-foreground" />
@@ -31,9 +32,9 @@ export function AppHeader() {
           <Bell className="h-4 w-4" />
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-severity-critical" />
         </Button>
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-mono">
-            {currentUser.name.split(" ").map((n) => n[0]).join("")}
+        <Avatar className="h-8 w-8 border border-primary/20">
+          <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
+            {me?.full_name?.[0]?.toUpperCase() || me?.email?.[0]?.toUpperCase() || "U"}
           </AvatarFallback>
         </Avatar>
       </div>
