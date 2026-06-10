@@ -108,7 +108,8 @@ function NewSession() {
           location: data.location || "Ubicación seleccionada",
           asset_code: data.assetCode,
           operator: "InfraInspect User",
-          coordinates: { lat: data.lat ?? 0, lng: data.lng ?? 0 },
+          latitude: data.lat ?? 0,
+          longitude: data.lng ?? 0,
         });
         infrastructure_id = infra.id;
       }
@@ -292,7 +293,7 @@ function NewSession() {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-white">Identificador Urbano (Código)</Label>
-                        <Input {...register("assetCode")} placeholder="PU-VIL-001" className="bg-input/50 h-11 rounded-xl font-mono uppercase" />
+                        <Input {...register("assetCode")} placeholder="Generado automáticamente" disabled className="bg-input/30 text-muted-foreground h-11 rounded-xl font-mono uppercase border-border/50" />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-white">Tipo de infraestructura</Label>

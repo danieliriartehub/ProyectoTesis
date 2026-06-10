@@ -6,7 +6,8 @@ export interface InfrastructureCreate {
   type: InfrastructureType;
   location: string;
   asset_code: string;
-  coordinates?: { lat: number; lng: number };
+  latitude: number;
+  longitude: number;
   operator?: string;
   commissioned_year?: number;
 }
