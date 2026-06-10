@@ -14,15 +14,15 @@ export interface RegisterRequest {
 }
 
 export interface TokenResponse {
-  access_token: string;
-  token_type: string;
+  accessToken: string;
+  tokenType: string;
   user: User;
 }
 
 export const authApi = {
   async login(data: LoginRequest): Promise<TokenResponse> {
     const res = await api.post<TokenResponse>("/api/v1/auth/login", data);
-    setToken(res.access_token);
+    setToken(res.accessToken);
     return res;
   },
 
