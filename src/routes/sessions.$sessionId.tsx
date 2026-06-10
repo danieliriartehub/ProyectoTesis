@@ -51,6 +51,7 @@ import {
   useSessionFindings,
   useSessionJobs,
   useSessionReport,
+  useUploadEvidence,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
@@ -369,10 +370,47 @@ function StatBox({ label, value, accent, children }: { label: string; value: str
 }
 
 function UploadEvidenceDialog() {
+  const { sessionId } = Route.useParams();
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState("image");
+  const [type, setType] = useState<"image" | "video" | "pdf" | "rtmp">("image");
+  const [file, setFile] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+  const uploadMutation = useUploadEvidence(sessionId);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = () => {
+    if (type !== "rtmp" && !file) {
+      toast.error("Por favor selecciona un archivo");
+      return;
+    }
+    
+    if (type !== "rtmp" && file) {
+      uploadMutation.mutate(
+        { file, meta: { session_id: sessionId, type, tags: notes } },
+        {
+          onSuccess: () => {
+            setOpen(false);
+            setFile(null);
+            setNotes("");
+            toast.success("Evidencia cargada exitosamente");
+          },
+          onError: (err: any) => {
+            toast.error(err.message || "Error al cargar la evidencia");
+          }
+        }
+      );
+    } else if (type === "rtmp") {
+      toast.error("RTMP stream en desarrollo");
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setFile(null); setNotes(""); } }}>
       <DialogTrigger asChild>
         <Button variant="outline"><Upload className="h-4 w-4" /> Cargar evidencia</Button>
       </DialogTrigger>
@@ -386,7 +424,7 @@ function UploadEvidenceDialog() {
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Tipo</Label>
-            <Select value={type} onValueChange={setType}>
+            <Select value={type} onValueChange={(val: any) => setType(val)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="image">Imagen</SelectItem>
@@ -402,21 +440,36 @@ function UploadEvidenceDialog() {
               <Input placeholder="rtmp://stream.infrainspect.ai/live/clave" className="font-mono" />
             </div>
           ) : (
-            <div className="rounded border-2 border-dashed border-border p-8 text-center">
+            <div className="relative rounded border-2 border-dashed border-border p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer">
+              <input 
+                type="file" 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                onChange={handleFileChange}
+                accept={type === 'image' ? 'image/*,.webp,.tiff' : type === 'video' ? 'video/*' : 'application/pdf'}
+              />
               <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-              <p className="mt-2 text-sm">Arrastra archivos aquí o haz clic para seleccionar</p>
-              <p className="text-xs text-muted-foreground mt-1">Múltiples archivos permitidos</p>
+              <p className="mt-2 text-sm">
+                {file ? <span className="font-semibold text-primary">{file.name}</span> : "Arrastra archivos aquí o haz clic para seleccionar"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Un archivo a la vez"}
+              </p>
             </div>
           )}
           <div className="space-y-1.5">
             <Label>Notas</Label>
-            <Textarea rows={2} placeholder="Contexto, condiciones de captura…" />
+            <Textarea 
+              rows={2} 
+              placeholder="Contexto, condiciones de captura…" 
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => { setOpen(false); toast.success("Evidencia encolada para procesamiento"); }}>
-            Cargar
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={uploadMutation.isPending}>Cancelar</Button>
+          <Button onClick={handleUpload} disabled={uploadMutation.isPending || (type !== "rtmp" && !file)}>
+            {uploadMutation.isPending ? "Cargando..." : "Cargar"}
           </Button>
         </DialogFooter>
       </DialogContent>
