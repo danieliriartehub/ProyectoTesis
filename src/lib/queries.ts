@@ -133,6 +133,18 @@ export function useSessionJobs(sessionId: string) {
   });
 }
 
+export function useCreateJob(sessionId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { session_id: string; evidence_id: string; model: string }) =>
+      jobsApi.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK.sessionJobs(sessionId) });
+      qc.invalidateQueries({ queryKey: QK.sessionEvidences(sessionId) });
+    },
+  });
+}
+
 /** All jobs across sessions — used in /jobs page */
 export function useAllJobs(sessionIds: string[]) {
   return useQuery({

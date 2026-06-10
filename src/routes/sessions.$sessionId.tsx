@@ -52,6 +52,7 @@ import {
   useSessionJobs,
   useSessionReport,
   useUploadEvidence,
+  useCreateJob,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
@@ -89,6 +90,25 @@ function SessionDetail() {
   const { data: findings = [] } = useSessionFindings(sessionId);
   const { data: jobs = [] } = useSessionJobs(sessionId);
   const { data: report } = useSessionReport(sessionId);
+  const createJob = useCreateJob(sessionId);
+
+  const handleLaunchAnalysis = () => {
+    const toAnalyze = evidence.filter(e => e.type !== "rtmp" && !jobs.some(j => j.evidenceId === e.id));
+    if (toAnalyze.length === 0) {
+      toast.info("No hay nuevas evidencias estáticas para analizar.");
+      return;
+    }
+
+    toast.info(`Iniciando análisis para ${toAnalyze.length} evidencias con yolo26x...`);
+    
+    for (const ev of toAnalyze) {
+      createJob.mutate({
+        session_id: sessionId,
+        evidence_id: ev.id,
+        model: "yolo26x",
+      });
+    }
+  };
 
   if (isLoading) return <div className="p-12 text-center text-muted-foreground">Cargando sesión...</div>;
   if (error || !session) {
@@ -126,7 +146,9 @@ function SessionDetail() {
           </div>
           <div className="flex flex-wrap gap-2">
             <UploadEvidenceDialog />
-            <Button variant="outline"><Sparkles className="h-4 w-4" /> Lanzar análisis</Button>
+            <Button variant="outline" onClick={handleLaunchAnalysis} disabled={createJob.isPending}>
+              <Sparkles className="h-4 w-4" /> Lanzar análisis
+            </Button>
             <Button><FileText className="h-4 w-4" /> Generar reporte</Button>
           </div>
         </div>
