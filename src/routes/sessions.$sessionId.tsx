@@ -53,6 +53,7 @@ import {
   useSessionReport,
   useUploadEvidence,
   useCreateJob,
+  useGenerateReport,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
@@ -91,6 +92,15 @@ function SessionDetail() {
   const { data: jobs = [] } = useSessionJobs(sessionId);
   const { data: report } = useSessionReport(sessionId);
   const createJob = useCreateJob(sessionId);
+  const generateReport = useGenerateReport(sessionId);
+
+  const handleGenerateReport = () => {
+    toast.info("Generando reporte técnico...");
+    generateReport.mutate(undefined, {
+      onSuccess: () => toast.success("Reporte generado exitosamente"),
+      onError: () => toast.error("Hubo un error al generar el reporte"),
+    });
+  };
 
   const handleLaunchAnalysis = () => {
     const toAnalyze = evidence.filter(e => e.type !== "rtmp" && !jobs.some(j => j.evidenceId === e.id));
@@ -149,7 +159,9 @@ function SessionDetail() {
             <Button variant="outline" onClick={handleLaunchAnalysis} disabled={createJob.isPending}>
               <Sparkles className="h-4 w-4" /> Lanzar análisis
             </Button>
-            <Button><FileText className="h-4 w-4" /> Generar reporte</Button>
+            <Button onClick={handleGenerateReport} disabled={generateReport.isPending}>
+              <FileText className="h-4 w-4" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
+            </Button>
           </div>
         </div>
       </div>
@@ -370,7 +382,12 @@ function SessionDetail() {
                     <p className="text-xs text-muted-foreground">{r.pages} págs · {r.format.toUpperCase()} · {new Date(r.generatedAt).toLocaleDateString("es-PE")}</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" /> Descargar</Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (r.fileUrl) window.open(r.fileUrl, "_blank");
+                  else toast.info("El PDF aún no ha sido subido. (Generador PDF en desarrollo Fase 5)");
+                }}>
+                  <Download className="h-3.5 w-3.5" /> Descargar
+                </Button>
               </CardContent>
             </Card>
           ))}

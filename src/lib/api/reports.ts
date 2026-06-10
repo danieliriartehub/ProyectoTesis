@@ -8,9 +8,8 @@ export interface ReportUpdate {
 }
 
 export const reportsApi = {
-  /** Trigger PDF generation for a session */
   generate(sessionId: string): Promise<Report> {
-    return api.post(`/api/v1/reports/generate/${sessionId}`);
+    return api.post(`/api/v1/reports/generate/${sessionId}`, {});
   },
 
   get(id: string): Promise<Report> {
