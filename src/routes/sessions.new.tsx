@@ -16,22 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateSession, useCreateInfrastructure, useInfrastructure, useMe } from "@/lib/queries";
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useState, useEffect, Suspense } from "react";
 
-// Fix Leaflet marker icons not showing in Vite
-import L from "leaflet";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+const MapPicker = React.lazy(() => import("@/components/MapPicker"));
 
 export const Route = createFileRoute("/sessions/new")({
   head: () => ({ meta: [{ title: "Nueva sesión — InfraInspect AI" }] }),
@@ -54,15 +41,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-function LocationPicker({ lat, lng, setPosition }: { lat: number, lng: number, setPosition: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      setPosition(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return <Marker position={[lat, lng]} />;
-}
-
 function NewSession() {
   const navigate = useNavigate();
   const { data: me } = useMe();
@@ -71,6 +49,11 @@ function NewSession() {
   const createInfra = useCreateInfrastructure();
 
   const [step, setStep] = useState(1);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { register, handleSubmit, setValue, watch, trigger, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
@@ -235,20 +218,20 @@ function NewSession() {
                     <Label className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> Seleccionar en el mapa</Label>
                     <p className="text-xs text-muted-foreground mb-2">Haz clic en el mapa para registrar las coordenadas exactas de la estructura.</p>
                     <div className="border rounded-md overflow-hidden flex-1 min-h-[300px] z-0 relative">
-                       <MapContainer center={[lat, lng]} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
-                          <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; OpenStreetMap contributors'
-                          />
-                          <LocationPicker 
-                            lat={lat} 
-                            lng={lng} 
-                            setPosition={(newLat, newLng) => {
-                              setValue("lat", newLat);
-                              setValue("lng", newLng);
-                            }} 
-                          />
-                        </MapContainer>
+                       {isClient ? (
+                         <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground bg-muted">Cargando mapa...</div>}>
+                           <MapPicker 
+                             lat={lat} 
+                             lng={lng} 
+                             setPosition={(newLat, newLng) => {
+                               setValue("lat", newLat);
+                               setValue("lng", newLng);
+                             }} 
+                           />
+                         </Suspense>
+                       ) : (
+                         <div className="flex items-center justify-center h-full text-muted-foreground bg-muted">Inicializando mapa...</div>
+                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="space-y-1">
