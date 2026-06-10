@@ -75,6 +75,7 @@ export interface Evidence {
   uploadedBy: string;
   status: EvidenceStatus;
   thumbnailUrl?: string;
+  storageUrl?: string;
   durationSec?: number;
   rtmpUrl?: string;
   capturedAt?: string;

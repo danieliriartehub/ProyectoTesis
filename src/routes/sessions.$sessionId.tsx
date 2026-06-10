@@ -226,16 +226,29 @@ function SessionDetail() {
                   const Icon = typeIcon[e.type];
                   return (
                     <div key={e.id} className="rounded border border-border p-3 hover:border-primary/40 transition-colors">
-                      <div className="aspect-video rounded bg-muted flex items-center justify-center mb-3 relative overflow-hidden">
-                        <Icon className="h-8 w-8 text-muted-foreground" />
+                      <div className="aspect-video rounded bg-muted flex items-center justify-center mb-3 relative overflow-hidden group">
+                        {(e.thumbnailUrl || (e.type === "image" && e.storageUrl)) ? (
+                          <img 
+                            src={e.thumbnailUrl || e.storageUrl} 
+                            alt={e.filename} 
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                          />
+                        ) : (
+                          <Icon className="h-8 w-8 text-muted-foreground" />
+                        )}
                         {e.type === "rtmp" && (
                           <span className="absolute top-2 left-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-severity-critical">
                             <span className="h-1.5 w-1.5 rounded-full bg-severity-critical animate-pulse" />
                             Live
                           </span>
                         )}
-                        {e.type === "video" && (
+                        {e.type === "video" && !e.thumbnailUrl && (
                           <Play className="absolute h-10 w-10 text-primary/70" />
+                        )}
+                        {e.type === "video" && e.thumbnailUrl && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                            <Play className="h-10 w-10 text-white drop-shadow-md" />
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center justify-between gap-2">
