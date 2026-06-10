@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BrainCircuit, FileSignature, Save } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Configuración — InfraInspect AI" }] }),
@@ -11,55 +15,104 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+  const [model, setModel] = useState("yolo26x");
+  const [threshold, setThreshold] = useState(0.65);
+  const [autoReport, setAutoReport] = useState(true);
+
+  // Load from local storage
+  useEffect(() => {
+    const saved = localStorage.getItem("infrainspect_settings");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.model) setModel(parsed.model);
+        if (parsed.threshold) setThreshold(parsed.threshold);
+        if (parsed.autoReport !== undefined) setAutoReport(parsed.autoReport);
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleSave = () => {
+    localStorage.setItem("infrainspect_settings", JSON.stringify({
+      model, threshold, autoReport
+    }));
+    toast.success("Configuración de IA actualizada");
+  };
+
   return (
     <div className="p-6 max-w-3xl space-y-6">
       <div>
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Plataforma</p>
-        <h1 className="text-3xl font-bold tracking-tight mt-1">Configuración</h1>
+        <h1 className="text-3xl font-bold tracking-tight mt-1">Configuración del Sistema</h1>
+        <p className="text-muted-foreground mt-2">Ajusta los parámetros del motor de inferencia YOLO y automatización de reportes.</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">Modelos IA</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Endpoint FastAPI</Label>
-            <Input defaultValue="https://api.infrainspect.ai/v1" className="font-mono text-xs" />
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="h-5 w-5 text-primary" />
+            <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">Motor YOLO (Ultralytics)</CardTitle>
           </div>
-          <div className="space-y-1.5">
-            <Label>Modelo por defecto</Label>
-            <Input defaultValue="YOLOv8-Infra-v3" className="font-mono text-xs" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label>Modelo de IA por defecto</Label>
+            <Select value={model} onValueChange={setModel}>
+              <SelectTrigger className="w-full md:w-[300px]">
+                <SelectValue placeholder="Seleccionar modelo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yolo26x">YOLOv8 Extra-Large (yolo26x) - Máxima Precisión</SelectItem>
+                <SelectItem value="yolo26n">YOLOv8 Nano (yolo26n) - Ligero / Drones</SelectItem>
+                <SelectItem value="yolov8x">YOLOv8x Estándar (Fallback COCO)</SelectItem>
+              </SelectContent>
+            </Select>
+            <CardDescription>
+              El modelo `yolo26x` se utilizará para evidencias subidas manualmente, mientras que `yolo26n` está optimizado para streams RTMP.
+            </CardDescription>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Confianza mínima</Label>
-              <p className="text-xs text-muted-foreground">Filtra hallazgos por debajo del umbral.</p>
+
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Umbral de Confianza (Threshold)</Label>
+                <CardDescription>Filtra falsos positivos por debajo del umbral.</CardDescription>
+              </div>
+              <span className="font-mono font-bold">{Math.round(threshold * 100)}%</span>
             </div>
-            <Input type="number" defaultValue="0.7" step="0.05" className="w-24 font-mono text-xs" />
+            <Slider 
+              value={[threshold]} 
+              min={0.1} 
+              max={0.95} 
+              step={0.05} 
+              onValueChange={(v) => setThreshold(v[0])} 
+            />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">Notificaciones</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {[
-            { id: "n1", label: "Hallazgo crítico detectado", desc: "Email + push" },
-            { id: "n2", label: "Job IA fallido", desc: "Push" },
-            { id: "n3", label: "Reporte firmado", desc: "Email" },
-          ].map((n) => (
-            <div key={n.id} className="flex items-center justify-between border-b border-border last:border-0 pb-3 last:pb-0">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileSignature className="h-5 w-5 text-primary" />
+            <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">Automatización</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+           <div className="flex items-center justify-between border-b border-border pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
               <div>
-                <Label>{n.label}</Label>
-                <p className="text-xs text-muted-foreground">{n.desc}</p>
+                <Label className="text-base">Generación automática de PDF</Label>
+                <CardDescription>Generar el reporte oficial en PDF automáticamente cuando todas las evidencias de la sesión terminen su análisis.</CardDescription>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={autoReport} onCheckedChange={setAutoReport} />
             </div>
-          ))}
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
-        <Button>Guardar cambios</Button>
+        <Button onClick={handleSave} className="gap-2">
+          <Save className="h-4 w-4" /> Guardar parámetros
+        </Button>
       </div>
     </div>
   );

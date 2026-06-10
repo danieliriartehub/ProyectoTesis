@@ -9,21 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TeamRouteImport } from './routes/team'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as JobsRouteImport } from './routes/jobs'
-import { Route as FindingsRouteImport } from './routes/findings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions.index'
 import { Route as SessionsNewRouteImport } from './routes/sessions.new'
 import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 
-const TeamRoute = TeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -34,14 +28,14 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsRoute = JobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FindingsRoute = FindingsRouteImport.update({
-  id: '/findings',
-  path: '/findings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,22 +61,20 @@ const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
+  '/login': typeof LoginRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
-  '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
+  '/login': typeof LoginRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
-  '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions': typeof SessionsIndexRoute
@@ -90,11 +82,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/findings': typeof FindingsRoute
   '/jobs': typeof JobsRoute
+  '/login': typeof LoginRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
-  '/team': typeof TeamRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/sessions/new': typeof SessionsNewRoute
   '/sessions/': typeof SessionsIndexRoute
@@ -103,33 +94,30 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/findings'
     | '/jobs'
+    | '/login'
     | '/reports'
     | '/settings'
-    | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/findings'
     | '/jobs'
+    | '/login'
     | '/reports'
     | '/settings'
-    | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions'
   id:
     | '__root__'
     | '/'
-    | '/findings'
     | '/jobs'
+    | '/login'
     | '/reports'
     | '/settings'
-    | '/team'
     | '/sessions/$sessionId'
     | '/sessions/new'
     | '/sessions/'
@@ -137,11 +125,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  FindingsRoute: typeof FindingsRoute
   JobsRoute: typeof JobsRoute
+  LoginRoute: typeof LoginRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
-  TeamRoute: typeof TeamRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   SessionsNewRoute: typeof SessionsNewRoute
   SessionsIndexRoute: typeof SessionsIndexRoute
@@ -149,13 +136,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/team': {
-      id: '/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -170,18 +150,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs': {
       id: '/jobs'
       path: '/jobs'
       fullPath: '/jobs'
       preLoaderRoute: typeof JobsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/findings': {
-      id: '/findings'
-      path: '/findings'
-      fullPath: '/findings'
-      preLoaderRoute: typeof FindingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -217,11 +197,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  FindingsRoute: FindingsRoute,
   JobsRoute: JobsRoute,
+  LoginRoute: LoginRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
-  TeamRoute: TeamRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   SessionsNewRoute: SessionsNewRoute,
   SessionsIndexRoute: SessionsIndexRoute,

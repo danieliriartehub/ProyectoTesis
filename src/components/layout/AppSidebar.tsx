@@ -26,13 +26,11 @@ import {
 const nav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Sesiones", url: "/sessions", icon: Radio },
-  { title: "Hallazgos", url: "/findings", icon: AlertTriangle },
   { title: "Reportes", url: "/reports", icon: FileText },
   { title: "Procesamiento IA", url: "/jobs", icon: Activity },
 ];
 
 const secondary = [
-  { title: "Equipo", url: "/team", icon: Users },
   { title: "Configuración", url: "/settings", icon: Settings },
 ];
 
