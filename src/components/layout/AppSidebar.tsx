@@ -46,9 +46,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 bg-[#0d1321]">
-      <SidebarHeader className="border-b-0 px-4 py-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-transparent border border-primary/30 glow-primary">
+      <SidebarHeader className={`border-b-0 py-6 ${collapsed ? 'px-2' : 'px-4'}`}>
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-transparent border border-primary/30 glow-primary">
             <Box className="h-5 w-5 text-primary" />
           </div>
           {!collapsed && (
@@ -81,8 +81,8 @@ export function AppSidebar() {
                           : "text-muted-foreground hover:bg-white/5 hover:text-foreground border-l-2 border-transparent"
                       }`}
                     >
-                      <Link to={item.url} className="flex items-center gap-3 px-3">
-                        <item.icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+                      <Link to={item.url} className={`flex items-center h-full w-full ${collapsed ? 'justify-center' : 'gap-3 px-3'}`}>
+                        <item.icon className={`h-5 w-5 shrink-0 ${active ? "text-primary" : ""}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </Link>
                     </SidebarMenuButton>
@@ -112,8 +112,8 @@ export function AppSidebar() {
                           : "text-muted-foreground hover:bg-white/5 hover:text-foreground border-l-2 border-transparent"
                       }`}
                     >
-                      <Link to={item.url} className="flex items-center gap-3 px-3">
-                        <item.icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+                      <Link to={item.url} className={`flex items-center h-full w-full ${collapsed ? 'justify-center' : 'gap-3 px-3'}`}>
+                        <item.icon className={`h-5 w-5 shrink-0 ${active ? "text-primary" : ""}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </Link>
                     </SidebarMenuButton>
@@ -145,9 +145,9 @@ export function AppSidebar() {
           </div>
         )}
 
-        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} pt-2`}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+        <div className={`flex items-center ${collapsed ? 'justify-center pb-2' : 'justify-between pt-2'}`}>
+          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
+            <div className="flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
               {me?.full_name?.[0]?.toUpperCase() || me?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             {!collapsed && (

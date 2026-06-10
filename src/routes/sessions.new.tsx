@@ -63,13 +63,26 @@ function NewSession() {
     });
 
   const infraMode = watch("infraMode");
+  const infraType = watch("infraType");
+  const infraName = watch("infraName");
   const lat = watch("lat") || -12.0464;
   const lng = watch("lng") || -77.0428;
 
+  useEffect(() => {
+    if (infraMode === "new" && infraType && infraName && !watch("assetCode")) {
+      const prefix = infraType.substring(0, 3).toUpperCase();
+      const code = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+      setValue("assetCode", code);
+    }
+  }, [infraMode, infraType, infraName, setValue, watch]);
+
   const handleNextStep = async () => {
-    const valid = await trigger(["title", "location", "scheduledFor"]);
-    if (valid) {
-      setStep(2);
+    if (step === 1) {
+      const valid = await trigger(["title", "location", "scheduledFor"]);
+      if (valid) setStep(2);
+    } else if (step === 2) {
+      const valid = await trigger(["infraMode", "infraId", "infraName", "infraType", "assetCode"]);
+      if (valid) setStep(3);
     }
   };
 
@@ -196,8 +209,9 @@ function NewSession() {
                     <Label className="text-white">Ubicación del proyecto</Label>
                     <Input 
                       {...register("location")} 
-                      placeholder="Ej. Av. Arequipa 1234, Lima" 
-                      className="bg-input/50 border-border focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl transition-all"
+                      disabled
+                      placeholder="Se definirá en el mapa (Paso 2)" 
+                      className="bg-input/30 border-border/50 text-muted-foreground h-12 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
@@ -236,14 +250,20 @@ function NewSession() {
                   <h2 className="text-sm font-semibold tracking-widest uppercase text-muted-foreground">Infraestructura y Mapa</h2>
                 </div>
 
-                <div className="flex gap-6 p-4 rounded-xl bg-black/20 border border-white/5">
+                <div className="flex gap-6 p-4 rounded-xl bg-[#0B1120] border border-white/5">
                   <label className="flex items-center gap-3 cursor-pointer text-white">
-                    <input type="radio" value="existing" {...register("infraMode")} className="w-4 h-4 accent-primary" /> 
-                    <span>Seleccionar estructura existente</span>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${infraMode === "existing" ? "border-primary bg-transparent" : "border-muted-foreground"}`}>
+                       {infraMode === "existing" && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                    </div>
+                    <input type="radio" value="existing" {...register("infraMode")} className="sr-only" /> 
+                    <span className="text-sm font-medium">Seleccionar estructura existente</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer text-white">
-                    <input type="radio" value="new" {...register("infraMode")} className="w-4 h-4 accent-primary" /> 
-                    <span>Matricular nueva estructura</span>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${infraMode === "new" ? "border-primary bg-transparent" : "border-muted-foreground"}`}>
+                       {infraMode === "new" && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                    </div>
+                    <input type="radio" value="new" {...register("infraMode")} className="sr-only" /> 
+                    <span className="text-sm font-medium">Matricular nueva estructura</span>
                   </label>
                 </div>
 
@@ -282,8 +302,8 @@ function NewSession() {
                             <SelectItem value="Bridge">Puente / Viaducto</SelectItem>
                             <SelectItem value="Building">Edificio / Fachada</SelectItem>
                             <SelectItem value="Road">Vía pública / Autopista</SelectItem>
-                            <SelectItem value="Tunnel">Túnel</SelectItem>
-                            <SelectItem value="Monument">Monumento</SelectItem>
+                            <SelectItem value="House">Casa / Residencial</SelectItem>
+                            <SelectItem value="Other">Otros</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -300,6 +320,7 @@ function NewSession() {
                               setPosition={(newLat, newLng) => {
                                 setValue("lat", newLat);
                                 setValue("lng", newLng);
+                                setValue("location", `${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
                               }} 
                             />
                           </Suspense>

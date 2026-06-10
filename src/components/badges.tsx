@@ -24,11 +24,11 @@ export function SeverityBadge({ severity, className }: { severity: Severity; cla
 }
 
 const sessionStatusMap: Record<SessionStatus, string> = {
-  Draft: "bg-muted text-muted-foreground border-border",
-  Capturing: "bg-accent/15 text-accent border-accent/40",
-  Processing: "bg-primary/15 text-primary border-primary/40",
-  Review: "bg-severity-medium/15 text-severity-medium border-severity-medium/40",
-  Completed: "bg-severity-low/15 text-severity-low border-severity-low/40",
+  Draft: "bg-destructive/15 text-destructive border-destructive/40",
+  Capturing: "bg-[#f97316]/15 text-[#f97316] border-[#f97316]/40",
+  Processing: "bg-[#eab308]/15 text-[#eab308] border-[#eab308]/40",
+  Review: "bg-primary/15 text-primary border-primary/40",
+  Completed: "bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/40",
 };
 
 export function SessionStatusBadge({ status, className }: { status: SessionStatus; className?: string }) {

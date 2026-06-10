@@ -18,7 +18,7 @@ import type { SessionStatus } from "@/types";
 import { useSessions } from "@/lib/queries";
 
 export const Route = createFileRoute("/sessions/")({
-  head: () => ({ meta: [{ title: "Sesiones de inspección — InfraInspect AI" }] }),
+  head: () => ({ meta: [{ title: "Sesiones de Inspección — InfraInspect AI" }] }),
   component: SessionsList,
 });
 
@@ -50,7 +50,7 @@ function SessionsList() {
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             Histórico y operación
           </p>
-          <h1 className="text-3xl font-bold tracking-tight mt-1">Sesiones de inspección</h1>
+          <h1 className="text-3xl font-bold tracking-tight mt-1">Sesiones de Inspección</h1>
         </div>
         <Button asChild>
           <Link to="/sessions/new">
@@ -86,12 +86,11 @@ function SessionsList() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los activos</SelectItem>
-              <SelectItem value="Power Line">Línea de transmisión</SelectItem>
-              <SelectItem value="Wind Turbine">Aerogenerador</SelectItem>
-              <SelectItem value="Solar Farm">Granja solar</SelectItem>
-              <SelectItem value="Bridge">Puente</SelectItem>
-              <SelectItem value="Pipeline">Ducto</SelectItem>
-              <SelectItem value="Telecom Tower">Torre telecom</SelectItem>
+              <SelectItem value="Bridge">Puente / Viaducto</SelectItem>
+              <SelectItem value="Building">Edificio / Fachada</SelectItem>
+              <SelectItem value="Road">Vía pública / Autopista</SelectItem>
+              <SelectItem value="House">Casa / Residencial</SelectItem>
+              <SelectItem value="Other">Otros</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="ml-auto">
