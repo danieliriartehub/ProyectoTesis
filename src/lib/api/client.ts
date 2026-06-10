@@ -33,6 +33,22 @@ export class ApiError extends Error {
   }
 }
 
+function toCamelCase(str: string) {
+  return str.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+}
+
+function keysToCamel(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map((v) => keysToCamel(v));
+  } else if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
+    return Object.keys(obj).reduce((result, key) => {
+      result[toCamelCase(key)] = keysToCamel(obj[key]);
+      return result;
+    }, {} as any);
+  }
+  return obj;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (res.status === 401) {
     clearToken();
@@ -48,7 +64,8 @@ async function handleResponse<T>(res: Response): Promise<T> {
     throw new ApiError(res.status, detail);
   }
   if (res.status === 204) return undefined as unknown as T;
-  return res.json() as Promise<T>;
+  const json = await res.json();
+  return keysToCamel(json) as T;
 }
 
 function authHeaders(extra?: Record<string, string>): Record<string, string> {
