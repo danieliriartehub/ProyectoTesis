@@ -43,14 +43,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  getSession,
-  getEvidenceBySession,
-  getFindingsBySession,
-  getJobsBySession,
-  getReportsBySession,
-  getUser,
   observations,
 } from "@/lib/mocks";
+import {
+  useSession,
+  useSessionEvidences,
+  useSessionFindings,
+  useSessionJobs,
+  useSessionReport,
+} from "@/lib/queries";
 import {
   SessionStatusBadge,
   SeverityBadge,
@@ -61,27 +62,7 @@ import {
 import type { EvidenceType } from "@/types";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
-  loader: ({ params }) => {
-    const session = getSession(params.sessionId);
-    if (!session) throw notFound();
-    return { session };
-  },
-  head: ({ loaderData }) => ({
-    meta: [{ title: `${loaderData?.session.code ?? "Sesión"} — InfraInspect AI` }],
-  }),
   component: SessionDetail,
-  notFoundComponent: () => (
-    <div className="p-12 text-center">
-      <h2 className="text-xl font-semibold">Sesión no encontrada</h2>
-      <Button variant="link" asChild><Link to="/sessions">Volver</Link></Button>
-    </div>
-  ),
-  errorComponent: ({ reset }) => (
-    <div className="p-12 text-center">
-      <h2 className="text-xl font-semibold">Error cargando la sesión</h2>
-      <Button onClick={reset} className="mt-4">Reintentar</Button>
-    </div>
-  ),
 });
 
 const typeIcon: Record<EvidenceType, React.ComponentType<{ className?: string }>> = {
@@ -101,12 +82,26 @@ function formatBytes(b: number) {
 }
 
 function SessionDetail() {
-  const { session } = Route.useLoaderData();
-  const evidence = getEvidenceBySession(session.id);
-  const findings = getFindingsBySession(session.id);
-  const jobs = getJobsBySession(session.id);
-  const reports = getReportsBySession(session.id);
-  const lead = getUser(session.leadInspectorId);
+  const { sessionId } = Route.useParams();
+  const { data: session, isLoading, error } = useSession(sessionId);
+  const { data: evidence = [] } = useSessionEvidences(sessionId);
+  const { data: findings = [] } = useSessionFindings(sessionId);
+  const { data: jobs = [] } = useSessionJobs(sessionId);
+  const { data: report } = useSessionReport(sessionId);
+
+  if (isLoading) return <div className="p-12 text-center text-muted-foreground">Cargando sesión...</div>;
+  if (error || !session) {
+    return (
+      <div className="p-12 text-center">
+        <h2 className="text-xl font-semibold">Sesión no encontrada</h2>
+        <p className="text-muted-foreground mt-2 mb-4">La sesión solicitada no existe o fue eliminada.</p>
+        <Button variant="outline" asChild><Link to="/sessions">Volver a sesiones</Link></Button>
+      </div>
+    );
+  }
+
+  const reports = report ? [report] : [];
+  const lead = { name: "Inspector" };
 
   return (
     <div className="p-6 space-y-6">
