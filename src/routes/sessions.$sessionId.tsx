@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import {
   ArrowLeft,
   MapPin,
@@ -19,6 +19,7 @@ import {
   Fingerprint,
   Loader2,
   XCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,25 @@ const typeIcon: Record<EvidenceType, React.ComponentType<{ className?: string }>
   pdf: FileType,
 };
 
+const FINDINGS_TRANSLATIONS: Record<string, string> = {
+  "Spalling": "Descorchamiento",
+  "Abscission": "Desprendimiento",
+  "Crack": "Grieta",
+  "Efflorescence": "Eflorescencia",
+  "Exposed Rebars": "Acero Expuesto",
+  "Rust": "Óxido",
+  "Corrosion": "Corrosión",
+  "Corrosión severa": "Corrosión severa",
+  "Aislador roto": "Aislador roto",
+  "Vegetación invasiva": "Vegetación invasiva",
+  "Erosión por borde de ataque": "Erosión por borde de ataque",
+  "Fisura en concreto": "Fisura en concreto",
+  "Pintura deteriorada": "Pintura deteriorada",
+  "Hot-spot termográfico": "Hot-spot termográfico",
+  "Suciedad acumulada": "Suciedad acumulada"
+};
+const getCategoryName = (category: string) => FINDINGS_TRANSLATIONS[category] || category;
+
 function formatBytes(b: number) {
   if (b === 0) return "—";
   const units = ["B", "KB", "MB", "GB"];
@@ -100,11 +120,24 @@ function SessionDetail() {
   const generateReport = useGenerateReport(sessionId);
   const updateFinding = useUpdateFinding(sessionId);
 
-  const handleReject = (findingId: string) => {
-    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: "rejected" } }), {
-      loading: "Rechazando...",
-      success: "Hallazgo rechazado",
-      error: "Error al rechazar",
+  const [threshold, setThreshold] = useState(0.65);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("infrainspect_settings");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.threshold !== undefined) setThreshold(parsed.threshold);
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleToggleStatus = (findingId: string, currentDisplayStatus: string) => {
+    const newStatus = currentDisplayStatus === "validated" ? "rejected" : "validated";
+    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: newStatus } as any }), {
+      loading: "Actualizando revisión...",
+      success: `Diagnóstico revertido a ${newStatus === 'validated' ? 'Validado' : 'Rechazado'}`,
+      error: "Error al actualizar",
     });
   };
 
@@ -327,6 +360,13 @@ function SessionDetail() {
           {findings.map((f) => {
             const ev = evidence.find((e) => e.id === f.evidenceId);
             const obs = observations.filter((o) => o.findingId === f.id);
+            
+            const isAutoRejected = f.confidence < threshold;
+            let displayStatus = f.status;
+            if (f.status === "pending" || f.status === "needs_review") {
+              displayStatus = isAutoRejected ? "rejected" : "validated";
+            }
+
             return (
               <Card key={f.id}>
                 <CardContent className="p-4">
@@ -369,13 +409,11 @@ function SessionDetail() {
                     )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <SeverityBadge severity={f.severity} />
-                        <FindingStatusBadge status={f.status} />
                         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                           conf {Math.round(f.confidence * 100)}%
                         </span>
                       </div>
-                      <h3 className="font-semibold mt-2">{f.category}</h3>
+                      <h3 className="font-semibold mt-2">{getCategoryName(f.category)}</h3>
                       <p className="text-sm text-muted-foreground mt-1">{f.description}</p>
                       {f.recommendation && (
                         <div className="mt-2 rounded border border-border bg-muted/40 p-2 text-xs">
@@ -385,18 +423,12 @@ function SessionDetail() {
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 shrink-0">
-                      {f.status === "pending" || f.status === "needs_review" ? (
-                        <>
-                          <ValidateDialog findingId={f.id} category={f.category} sessionId={sessionId} />
-                          <Button size="sm" variant="ghost" onClick={() => handleReject(f.id)}>
-                            <XCircle className="h-3.5 w-3.5" /> Rechazar
-                          </Button>
-                        </>
-                      ) : (
-                        <div className={`flex items-center justify-center py-2 px-3 rounded-md text-xs font-semibold ${f.status === "validated" ? "text-green-500 bg-green-500/10" : "text-red-500 bg-red-500/10"}`}>
-                          {f.status === "validated" ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Validado</> : <><XCircle className="h-4 w-4 mr-2" /> Rechazado</>}
-                        </div>
-                      )}
+                      <div className={`flex items-center justify-center py-2 px-3 rounded-md text-xs font-semibold ${displayStatus === "validated" ? "text-green-500 bg-green-500/10" : "text-red-500 bg-red-500/10"}`}>
+                        {displayStatus === "validated" ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Validado</> : <><XCircle className="h-4 w-4 mr-2" /> Rechazado</>}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => handleToggleStatus(f.id, displayStatus)}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Revisión
+                      </Button>
                     </div>
                   </div>
                   {obs.length > 0 && (
@@ -419,6 +451,19 @@ function SessionDetail() {
           })}
           {findings.length === 0 && (
             <Card><CardContent className="text-center py-12 text-muted-foreground">Aún no hay hallazgos. Procesa evidencias para generarlos.</CardContent></Card>
+          )}
+          {findings.length > 0 && (
+            <div className="mt-8 border-t border-border pt-4">
+              <h4 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-widest font-mono">Leyenda de Hallazgos</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div><span className="font-semibold text-foreground">Descorchamiento:</span> Desprendimiento superficial del concreto.</div>
+                <div><span className="font-semibold text-foreground">Desprendimiento:</span> Pérdida profunda de material.</div>
+                <div><span className="font-semibold text-foreground">Grieta:</span> Fisura o fractura en el material.</div>
+                <div><span className="font-semibold text-foreground">Eflorescencia:</span> Manchas blancas producidas por sales.</div>
+                <div><span className="font-semibold text-foreground">Acero Expuesto:</span> Armadura visible por pérdida de recubrimiento.</div>
+                <div><span className="font-semibold text-foreground">Óxido:</span> Corrosión visible en elementos metálicos.</div>
+              </div>
+            </div>
           )}
         </TabsContent>
 
