@@ -81,7 +81,7 @@ const typeIcon: Record<EvidenceType, React.ComponentType<{ className?: string }>
   pdf: FileType,
 };
 
-const FINDINGS_TRANSLATIONS: Record<string, string> = {
+export const FINDINGS_TRANSLATIONS: Record<string, string> = {
   "Spalling": "Descorchamiento",
   "Abscission": "Desprendimiento",
   "Crack": "Grieta",
