@@ -76,10 +76,8 @@ function ReportsPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      if (r.fileUrl && r.fileUrl !== "#") {
-                        window.open(r.fileUrl, "_blank");
-                      } else {
-                        toast.info("PDF en generación, intenta en unos segundos");
+                      if (s) {
+                        window.open(`/reports/print/${s.id}`, "_blank");
                       }
                     }}
                   >

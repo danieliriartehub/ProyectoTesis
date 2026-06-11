@@ -122,11 +122,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isLogin = pathname === "/login";
+  const isPrint = pathname.startsWith("/reports/print/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isLogin ? (
+        {isLogin || isPrint ? (
           <main className="min-h-screen w-full bg-background">
             <Outlet />
           </main>

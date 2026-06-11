@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrainCircuit, FileSignature, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Configuración — InfraInspect AI" }] }),
@@ -18,6 +19,7 @@ function SettingsPage() {
   const [model, setModel] = useState("yolo26n");
   const [threshold, setThreshold] = useState(0.65);
   const [autoReport, setAutoReport] = useState(true);
+  const [geminiApiKey, setGeminiApiKey] = useState("");
 
   // Load from local storage
   useEffect(() => {
@@ -28,13 +30,14 @@ function SettingsPage() {
         if (parsed.model) setModel(parsed.model);
         if (parsed.threshold) setThreshold(parsed.threshold);
         if (parsed.autoReport !== undefined) setAutoReport(parsed.autoReport);
+        if (parsed.geminiApiKey) setGeminiApiKey(parsed.geminiApiKey);
       } catch (e) {}
     }
   }, []);
 
   const handleSave = () => {
     localStorage.setItem("infrainspect_settings", JSON.stringify({
-      model, threshold, autoReport
+      model, threshold, autoReport, geminiApiKey
     }));
     toast.success("Configuración de IA actualizada");
   };
@@ -104,6 +107,19 @@ function SettingsPage() {
                 <CardDescription>Generar el reporte oficial en PDF automáticamente cuando todas las evidencias de la sesión terminen su análisis.</CardDescription>
               </div>
               <Switch checked={autoReport} onCheckedChange={setAutoReport} />
+            </div>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex-1 mr-4">
+                <Label className="text-base">Google Gemini API Key</Label>
+                <CardDescription>Clave para generar resúmenes técnicos automáticos en los reportes (Nivel gratuito soportado).</CardDescription>
+                <Input 
+                  type="password" 
+                  className="mt-2 font-mono text-xs w-full max-w-md" 
+                  placeholder="AIzaSy..." 
+                  value={geminiApiKey} 
+                  onChange={(e) => setGeminiApiKey(e.target.value)} 
+                />
+              </div>
             </div>
         </CardContent>
       </Card>

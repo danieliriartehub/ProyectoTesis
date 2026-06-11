@@ -150,10 +150,13 @@ function SessionDetail() {
   };
 
   const handleGenerateReport = () => {
-    toast.info("Generando reporte técnico...");
+    toast.info("Generando reporte técnico y abriendo vista de impresión...");
     generateReport.mutate(undefined, {
-      onSuccess: () => toast.success("Reporte generado exitosamente"),
-      onError: () => toast.error("Hubo un error al generar el reporte"),
+      onSuccess: () => {
+        toast.success("Reporte listo para imprimir");
+        window.open(`/reports/print/${session?.id}`, "_blank");
+      },
+      onError: () => toast.error("Hubo un error al registrar el reporte"),
     });
   };
 
