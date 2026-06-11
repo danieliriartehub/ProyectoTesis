@@ -15,7 +15,7 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const [model, setModel] = useState("yolo26x");
+  const [model, setModel] = useState("yolo26n");
   const [threshold, setThreshold] = useState(0.65);
   const [autoReport, setAutoReport] = useState(true);
 
@@ -62,13 +62,12 @@ function SettingsPage() {
                 <SelectValue placeholder="Seleccionar modelo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="yolo26x">YOLOv8 Extra-Large (yolo26x) - Máxima Precisión</SelectItem>
-                <SelectItem value="yolo26n">YOLOv8 Nano (yolo26n) - Ligero / Drones</SelectItem>
-                <SelectItem value="yolov8x">YOLOv8x Estándar (Fallback COCO)</SelectItem>
+                <SelectItem value="yolo26n">YOLO26N (Ligero / Óptimo por defecto)</SelectItem>
+                <SelectItem value="yolo26x">YOLO26X (Pesado / Máxima Precisión)</SelectItem>
               </SelectContent>
             </Select>
             <CardDescription>
-              El modelo `yolo26x` se utilizará para evidencias subidas manualmente, mientras que `yolo26n` está optimizado para streams RTMP.
+              Puedes intercalar entre YOLO26N para un procesamiento rápido (ideal para hardware de nube estándar) y YOLO26X para inspecciones donde necesites máxima precisión en los detalles, asumiendo un hardware más potente.
             </CardDescription>
           </div>
 

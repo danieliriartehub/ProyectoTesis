@@ -112,13 +112,23 @@ function SessionDetail() {
       return;
     }
 
-    toast.info(`Iniciando análisis para ${toAnalyze.length} evidencias con yolo26x...`);
+    // Leer configuración
+    const saved = localStorage.getItem("infrainspect_settings");
+    let targetModel = "yolo26n";
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.model) targetModel = parsed.model;
+      } catch (e) {}
+    }
+
+    toast.info(`Iniciando análisis para ${toAnalyze.length} evidencias con ${targetModel.toUpperCase()}...`);
     
     for (const ev of toAnalyze) {
       createJob.mutate({
         session_id: sessionId,
         evidence_id: ev.id,
-        model: "yolo26x",
+        model: targetModel,
       });
     }
   };
