@@ -63,7 +63,7 @@ Tu respuesta debe contener exactamente dos partes:
 
 NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey.trim()}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
