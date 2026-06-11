@@ -56,6 +56,7 @@ import {
   useUploadEvidence,
   useCreateJob,
   useGenerateReport,
+  useUpdateFinding,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
