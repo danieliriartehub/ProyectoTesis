@@ -258,31 +258,40 @@ function SessionDetail() {
                   const Icon = typeIcon[e.type];
                   return (
                     <div key={e.id} className="rounded border border-border p-3 hover:border-primary/40 transition-colors">
-                      <div className="aspect-video rounded bg-muted flex items-center justify-center mb-3 relative overflow-hidden group">
-                        {(e.thumbnailUrl || (e.type === "image" && e.storageUrl)) ? (
-                          <img 
-                            src={e.thumbnailUrl || e.storageUrl} 
-                            alt={e.filename} 
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                          />
-                        ) : (
-                          <Icon className="h-8 w-8 text-muted-foreground" />
-                        )}
-                        {e.type === "rtmp" && (
-                          <span className="absolute top-2 left-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-severity-critical">
-                            <span className="h-1.5 w-1.5 rounded-full bg-severity-critical animate-pulse" />
-                            Live
-                          </span>
-                        )}
-                        {e.type === "video" && !e.thumbnailUrl && (
-                          <Play className="absolute h-10 w-10 text-primary/70" />
-                        )}
-                        {e.type === "video" && e.thumbnailUrl && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                            <Play className="h-10 w-10 text-white drop-shadow-md" />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="aspect-video rounded bg-muted flex items-center justify-center mb-3 relative overflow-hidden group cursor-pointer">
+                            {(e.thumbnailUrl || (e.type === "image" && e.storageUrl)) ? (
+                              <img 
+                                src={e.thumbnailUrl || e.storageUrl} 
+                                alt={e.filename} 
+                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                              />
+                            ) : (
+                              <Icon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                            {e.type === "rtmp" && (
+                              <span className="absolute top-2 left-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-severity-critical">
+                                <span className="h-1.5 w-1.5 rounded-full bg-severity-critical animate-pulse" />
+                                Live
+                              </span>
+                            )}
+                            {e.type === "video" && !e.thumbnailUrl && (
+                              <Play className="absolute h-10 w-10 text-primary/70" />
+                            )}
+                            {e.type === "video" && e.thumbnailUrl && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                                <Play className="h-10 w-10 text-white drop-shadow-md" />
+                              </div>
+                            )}
                           </div>
+                        </DialogTrigger>
+                        {(e.thumbnailUrl || e.storageUrl) && (
+                          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none shadow-2xl flex justify-center items-center overflow-hidden [&>button]:text-white">
+                             <img src={e.storageUrl || e.thumbnailUrl} alt={e.filename} className="max-w-full max-h-[95vh] object-contain" />
+                          </DialogContent>
                         )}
-                      </div>
+                      </Dialog>
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-xs truncate" title={e.filename}>{e.filename}</span>
                         <EvidenceStatusBadge status={e.status} />
@@ -329,10 +338,18 @@ function SessionDetail() {
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 shrink-0">
-                      <ValidateDialog findingId={f.id} category={f.category} />
-                      <Button size="sm" variant="ghost" onClick={() => toast.error("Hallazgo rechazado")}>
-                        <XCircle className="h-3.5 w-3.5" /> Rechazar
-                      </Button>
+                      {f.status === "pending" || f.status === "needs_review" ? (
+                        <>
+                          <ValidateDialog findingId={f.id} category={f.category} />
+                          <Button size="sm" variant="ghost" onClick={() => toast.error("Hallazgo rechazado")}>
+                            <XCircle className="h-3.5 w-3.5" /> Rechazar
+                          </Button>
+                        </>
+                      ) : (
+                        <div className={`flex items-center justify-center py-2 px-3 rounded-md text-xs font-semibold ${f.status === "validated" ? "text-green-500 bg-green-500/10" : "text-red-500 bg-red-500/10"}`}>
+                          {f.status === "validated" ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Validado</> : <><XCircle className="h-4 w-4 mr-2" /> Rechazado</>}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {obs.length > 0 && (

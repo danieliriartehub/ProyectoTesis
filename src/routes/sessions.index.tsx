@@ -43,6 +43,13 @@ function SessionsList() {
     return matchesQ && matchesStatus && matchesType;
   });
 
+  const getDynamicStatus = (s: any) => {
+    if (s.status === "Completed") return "Completed";
+    if (s.findingsCount > 0) return "Review";
+    if (s.evidenceCount > 0) return "Processing";
+    return s.status;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -135,7 +142,7 @@ function SessionsList() {
                     </div>
                   </Link>
                 </TableCell>
-                <TableCell><SessionStatusBadge status={s.status} /></TableCell>
+                <TableCell><SessionStatusBadge status={getDynamicStatus(s)} /></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 min-w-[120px]">
                     <Progress value={s.progress} className="h-1.5 flex-1" />
