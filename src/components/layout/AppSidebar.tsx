@@ -27,7 +27,6 @@ import { useMe } from "@/lib/queries";
 const nav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Sesiones", url: "/sessions", icon: Radio },
-  { title: "Reportes", url: "/reports", icon: FileText },
   { title: "Procesamiento IA", url: "/jobs", icon: Activity },
 ];
 
@@ -145,24 +144,7 @@ export function AppSidebar() {
           </div>
         )}
 
-        <div className={`flex items-center ${collapsed ? 'justify-center pb-2' : 'justify-between pt-2'}`}>
-          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
-            <div className="flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
-              {me?.full_name?.[0]?.toUpperCase() || me?.email?.[0]?.toUpperCase() || 'U'}
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-semibold text-white leading-tight truncate">
-                  {me?.full_name || 'Usuario'}
-                </span>
-                <span className="text-xs text-muted-foreground leading-tight truncate">
-                  {me?.role === "admin" ? "Administrador" : "Inspector"}
-                </span>
-              </div>
-            )}
-          </div>
-          {!collapsed && <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
-        </div>
+
       </SidebarFooter>
     </Sidebar>
   );
