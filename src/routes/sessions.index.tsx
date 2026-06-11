@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Search, Filter, MapPin } from "lucide-react";
+import { Plus, Search, Filter, MapPin, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,6 +161,35 @@ function SessionsList() {
             )}
           </TableBody>
         </Table>
+      </Card>
+
+      <Card className="p-6 bg-slate-900 text-slate-300 border-slate-800">
+        <div className="flex items-center gap-2 mb-4 text-white">
+          <Info className="h-5 w-5 text-blue-400" />
+          <h3 className="font-semibold text-lg">Ciclo de vida de las sesiones</h3>
+        </div>
+        <div className="grid md:grid-cols-5 gap-6 text-sm">
+          <div>
+            <div className="mb-2"><SessionStatusBadge status="Draft" /></div>
+            <p className="text-slate-400">Estado inicial. Así nacen todas las sesiones recién creadas.</p>
+          </div>
+          <div>
+            <div className="mb-2"><SessionStatusBadge status="Capturing" /></div>
+            <p className="text-slate-400">Se activa automáticamente al subir la primera evidencia (foto/video).</p>
+          </div>
+          <div>
+            <div className="mb-2"><SessionStatusBadge status="Processing" /></div>
+            <p className="text-slate-400">Se activa cuando envías las evidencias a analizar con los modelos de IA.</p>
+          </div>
+          <div>
+            <div className="mb-2"><SessionStatusBadge status="Review" /></div>
+            <p className="text-slate-400">Se activa al generar el reporte, indicando que los resultados de la IA están listos para revisión.</p>
+          </div>
+          <div>
+            <div className="mb-2"><SessionStatusBadge status="Completed" /></div>
+            <p className="text-slate-400">La inspección ha finalizado oficialmente al presionar el botón "Terminar Sesión".</p>
+          </div>
+        </div>
       </Card>
     </div>
   );
