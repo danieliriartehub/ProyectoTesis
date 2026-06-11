@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import {
   ArrowLeft,
   MapPin,
@@ -14,9 +14,10 @@ import {
   Play,
   Sparkles,
   CheckCircle2,
-  XCircle,
   MessageSquare,
   Download,
+  Fingerprint,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,8 @@ import type { EvidenceType } from "@/types";
 export const Route = createFileRoute("/sessions/$sessionId")({
   component: SessionDetail,
 });
+
+const MapView = lazy(() => import("@/components/MapView"));
 
 const typeIcon: Record<EvidenceType, React.ComponentType<{ className?: string }>> = {
   image: ImageIcon,
@@ -147,19 +150,32 @@ function SessionDetail() {
               <SessionStatusBadge status={session.status} />
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{session.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {session.infrastructure.location}</span>
+              <span className="flex items-center gap-1.5 text-primary bg-primary/10 px-2 py-0.5 rounded font-mono font-semibold tracking-wider">
+                <MapPin className="h-3.5 w-3.5" /> 
+                {session.infrastructure.coordinates.lat.toFixed(4)}, {session.infrastructure.coordinates.lng.toFixed(4)}
+              </span>
               <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(session.createdAt).toLocaleDateString("es-PE")}</span>
-              <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {session.teamIds.length} miembros</span>
-              <span className="font-mono text-xs">{session.infrastructure.assetCode}</span>
-            </div>
+              <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded font-mono text-xs">
+                <Fingerprint className="h-3.5 w-3.5 text-muted-foreground" />
+                {session.infrastructure.assetCode}
+              </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <UploadEvidenceDialog />
-            <Button variant="outline" onClick={handleLaunchAnalysis} disabled={createJob.isPending}>
-              <Sparkles className="h-4 w-4" /> Lanzar análisis
+            <UploadEvidenceDialog isPrimary={evidence.length === 0} />
+            <Button 
+              variant={evidence.length > 0 ? "default" : "outline"}
+              onClick={handleLaunchAnalysis} 
+              disabled={createJob.isPending || evidence.length === 0}
+              className={createJob.isPending ? "animate-pulse" : evidence.length > 0 ? "bg-gradient-premium glow-primary" : ""}
+            >
+              {createJob.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4" />} 
+              {createJob.isPending ? "Procesando..." : "Procesar con IA"}
             </Button>
-            <Button onClick={handleGenerateReport} disabled={generateReport.isPending}>
+            <Button 
+              variant="outline"
+              onClick={handleGenerateReport} 
+              disabled={generateReport.isPending || (session.status !== "Review" && session.status !== "Completed")}
+            >
               <FileText className="h-4 w-4" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
             </Button>
           </div>
@@ -169,7 +185,10 @@ function SessionDetail() {
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatBox label="Progreso" value={`${session.progress}%`}>
-          <Progress value={session.progress} className="h-1 mt-2" />
+          <Progress 
+            value={session.progress} 
+            className={`h-1 mt-2 ${session.status === 'Completed' ? '[&>div]:bg-[#22c55e]' : session.status === 'Review' ? '[&>div]:bg-primary glow-primary' : ''}`} 
+          />
         </StatBox>
         <StatBox label="Evidencias" value={evidence.length} />
         <StatBox label="Hallazgos" value={findings.length} />
@@ -194,29 +213,22 @@ function SessionDetail() {
                 <Info label="Activo" value={session.infrastructure.name} />
                 <Info label="Tipo" value={session.infrastructure.type} />
                 <Info label="Código" value={session.infrastructure.assetCode} mono />
-                <Info label="Operador" value={session.infrastructure.operator ?? "—"} />
                 <Info label="Coordenadas" value={`${session.infrastructure.coordinates.lat}, ${session.infrastructure.coordinates.lng}`} mono />
-                <Info label="Año comisionado" value={String(session.infrastructure.commissionedYear ?? "—")} />
                 {session.weather && <Info label="Clima" value={session.weather} />}
-                <Info label="Inspector líder" value={lead?.name ?? "—"} />
               </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">Mapa</CardTitle></CardHeader>
-              <CardContent>
-                <div className="aspect-square rounded border border-border bg-muted relative overflow-hidden"
-                  style={{
-                    backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
-                    backgroundSize: "24px 24px",
-                  }}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative">
-                      <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                      <div className="relative h-3 w-3 rounded-full bg-primary ring-4 ring-primary/30" />
-                    </div>
-                  </div>
-                  <div className="absolute bottom-2 left-2 font-mono text-[10px] text-muted-foreground bg-background/60 px-1.5 py-0.5 rounded">
-                    {session.infrastructure.coordinates.lat.toFixed(3)}, {session.infrastructure.coordinates.lng.toFixed(3)}
+              <CardContent className="p-0 overflow-hidden rounded-b-xl">
+                <div className="aspect-square relative z-0">
+                  <Suspense fallback={<div className="flex items-center justify-center h-full bg-muted text-muted-foreground">Cargando mapa satelital...</div>}>
+                    <MapView 
+                      lat={session.infrastructure.coordinates.lat} 
+                      lng={session.infrastructure.coordinates.lng} 
+                    />
+                  </Suspense>
+                  <div className="absolute bottom-2 left-2 z-[400] font-mono text-[10px] text-white bg-black/60 px-2 py-1 rounded backdrop-blur-sm border border-white/10 shadow-lg">
+                    {session.infrastructure.coordinates.lat.toFixed(5)}, {session.infrastructure.coordinates.lng.toFixed(5)}
                   </div>
                 </div>
               </CardContent>
@@ -421,7 +433,7 @@ function StatBox({ label, value, accent, children }: { label: string; value: str
   );
 }
 
-function UploadEvidenceDialog() {
+function UploadEvidenceDialog({ isPrimary }: { isPrimary?: boolean }) {
   const { sessionId } = Route.useParams();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"image" | "video" | "pdf" | "rtmp">("image");
@@ -464,7 +476,9 @@ function UploadEvidenceDialog() {
   return (
     <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setFile(null); setNotes(""); } }}>
       <DialogTrigger asChild>
-        <Button variant="outline"><Upload className="h-4 w-4" /> Cargar evidencia</Button>
+        <Button variant={isPrimary ? "default" : "outline"} className={isPrimary ? "bg-gradient-premium glow-primary" : ""}>
+          <Upload className="h-4 w-4" /> Cargar evidencia
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
