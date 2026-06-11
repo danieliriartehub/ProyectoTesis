@@ -153,7 +153,7 @@ function SessionDetail() {
             <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {session.infrastructure.coordinates.lat.toFixed(4)}, {session.infrastructure.coordinates.lng.toFixed(4)}</span>
               <span className="text-muted-foreground/50">·</span>
-              <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(session.createdAt).toLocaleDateString("es-PE")}</span>
+              <span suppressHydrationWarning className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(session.createdAt).toLocaleDateString("es-PE")}</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="flex items-center gap-1.5 font-mono"><Fingerprint className="h-3.5 w-3.5" /> {session.infrastructure.assetCode}</span>
             </div>
