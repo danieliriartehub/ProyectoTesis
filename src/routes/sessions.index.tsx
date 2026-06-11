@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Search, Filter, MapPin, Info } from "lucide-react";
+import { Plus, Search, Filter, Box, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,9 +94,6 @@ function SessionsList() {
               <SelectItem value="Other">Otros</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" className="ml-auto">
-            <Filter className="h-3.5 w-3.5" /> Más filtros
-          </Button>
         </div>
       </Card>
 
@@ -132,7 +129,7 @@ function SessionsList() {
                   <Link to="/sessions/$sessionId" params={{ sessionId: s.id }} className="block">
                     <div className="font-semibold">{s.title}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-3 w-3" /> {s.infrastructure.location} · {s.infrastructure.type}
+                      <Box className="h-3 w-3" /> {s.infrastructure.type}
                     </div>
                   </Link>
                 </TableCell>
@@ -148,7 +145,7 @@ function SessionsList() {
                   {s.findingsCount}
                 </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
-                  {new Date(s.updatedAt).toLocaleDateString("es-PE")}
+                  {new Date(s.updatedAt).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}
                 </TableCell>
               </TableRow>
             ))}
