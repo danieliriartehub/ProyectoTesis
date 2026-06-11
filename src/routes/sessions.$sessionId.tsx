@@ -234,9 +234,9 @@ function SessionDetail() {
               {createJob.isPending ? "Procesando..." : (jobs.length > 0 ? "Reprocesar" : "Procesar con IA")}
             </Button>
             <Button 
-              variant={(session.status === "Review" || session.status === "Completed") ? "default" : "outline"}
+              variant={findings.length > 0 ? "default" : "outline"}
               onClick={handleGenerateReport} 
-              disabled={generateReport.isPending || (session.status !== "Review" && session.status !== "Completed")}
+              disabled={generateReport.isPending || findings.length === 0}
             >
               <FileText className="h-4 w-4 mr-2" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
             </Button>
@@ -245,7 +245,8 @@ function SessionDetail() {
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatBox label="Progreso" value={`${session.progress}%`}>
           <Progress 
             value={session.progress} 
@@ -254,7 +255,6 @@ function SessionDetail() {
         </StatBox>
         <StatBox label="Evidencias" value={evidence.length} />
         <StatBox label="Hallazgos" value={findings.length} />
-        <StatBox label="Críticos" value={findings.filter(f => f.severity === "critical").length} accent="critical" />
         <StatBox label="Jobs IA" value={jobs.length} />
       </div>
 
