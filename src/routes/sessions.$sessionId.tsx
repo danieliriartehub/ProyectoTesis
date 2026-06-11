@@ -150,44 +150,41 @@ function SessionDetail() {
               <SessionStatusBadge status={session.status} />
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{session.title}</h1>
-              <span className="flex items-center gap-1.5 text-primary bg-primary/10 px-2 py-0.5 rounded font-mono font-semibold tracking-wider">
-                <MapPin className="h-3.5 w-3.5" /> 
-                {session.infrastructure.coordinates.lat.toFixed(4)}, {session.infrastructure.coordinates.lng.toFixed(4)}
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {session.infrastructure.coordinates.lat.toFixed(4)}, {session.infrastructure.coordinates.lng.toFixed(4)}</span>
+              <span className="text-muted-foreground/50">·</span>
               <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(session.createdAt).toLocaleDateString("es-PE")}</span>
-              <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded font-mono text-xs">
-                <Fingerprint className="h-3.5 w-3.5 text-muted-foreground" />
-                {session.infrastructure.assetCode}
-              </span>
+              <span className="text-muted-foreground/50">·</span>
+              <span className="flex items-center gap-1.5 font-mono"><Fingerprint className="h-3.5 w-3.5" /> {session.infrastructure.assetCode}</span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             <UploadEvidenceDialog isPrimary={evidence.length === 0} />
             <Button 
-              variant={evidence.length > 0 ? "default" : "outline"}
+              variant={evidence.length > 0 && session.status !== "Review" && session.status !== "Completed" ? "default" : "outline"}
               onClick={handleLaunchAnalysis} 
               disabled={createJob.isPending || evidence.length === 0}
-              className={createJob.isPending ? "animate-pulse" : evidence.length > 0 ? "bg-gradient-premium glow-primary" : ""}
             >
-              {createJob.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4" />} 
+              {createJob.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />} 
               {createJob.isPending ? "Procesando..." : "Procesar con IA"}
             </Button>
             <Button 
-              variant="outline"
+              variant={(session.status === "Review" || session.status === "Completed") ? "default" : "outline"}
               onClick={handleGenerateReport} 
               disabled={generateReport.isPending || (session.status !== "Review" && session.status !== "Completed")}
             >
-              <FileText className="h-4 w-4" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
+              <FileText className="h-4 w-4 mr-2" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
             </Button>
           </div>
         </div>
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatBox label="Progreso" value={`${session.progress}%`}>
           <Progress 
             value={session.progress} 
-            className={`h-1 mt-2 ${session.status === 'Completed' ? '[&>div]:bg-[#22c55e]' : session.status === 'Review' ? '[&>div]:bg-primary glow-primary' : ''}`} 
+            className="h-1.5 mt-3" 
           />
         </StatBox>
         <StatBox label="Evidencias" value={evidence.length} />
@@ -423,10 +420,10 @@ function Info({ label, value, mono }: { label: string; value: string; mono?: boo
 
 function StatBox({ label, value, accent, children }: { label: string; value: string | number; accent?: "critical"; children?: React.ReactNode }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-bold font-mono mt-1 ${accent === "critical" ? "text-severity-critical" : ""}`}>{value}</div>
+    <Card className="shadow-none bg-muted/20">
+      <CardContent className="p-5">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
+        <div className={`text-3xl font-light tracking-tight mt-2 ${accent === "critical" ? "text-severity-critical font-medium" : "text-foreground"}`}>{value}</div>
         {children}
       </CardContent>
     </Card>
@@ -476,8 +473,8 @@ function UploadEvidenceDialog({ isPrimary }: { isPrimary?: boolean }) {
   return (
     <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setFile(null); setNotes(""); } }}>
       <DialogTrigger asChild>
-        <Button variant={isPrimary ? "default" : "outline"} className={isPrimary ? "bg-gradient-premium glow-primary" : ""}>
-          <Upload className="h-4 w-4" /> Cargar evidencia
+        <Button variant={isPrimary ? "default" : "outline"}>
+          <Upload className="h-4 w-4 mr-2" /> Cargar evidencia
         </Button>
       </DialogTrigger>
       <DialogContent>
