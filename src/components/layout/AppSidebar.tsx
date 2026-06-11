@@ -44,7 +44,7 @@ export function AppSidebar() {
     url === "/" ? pathname === "/" : pathname.startsWith(url);
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0 bg-[#0d1321]">
+    <Sidebar collapsible="offcanvas" className="border-r-0 bg-[#0d1321]">
       <SidebarHeader className={`border-b-0 py-6 ${collapsed ? 'px-2' : 'px-4'}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-transparent border border-primary/30 glow-primary">
