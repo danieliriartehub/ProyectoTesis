@@ -331,7 +331,7 @@ function SessionDetail() {
                           <MessageSquare className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
                           <div>
                             <span className="font-semibold">{o.authorName}</span>
-                            <span className="text-muted-foreground"> · {new Date(o.createdAt).toLocaleString("es-PE")}</span>
+                            <span suppressHydrationWarning className="text-muted-foreground"> · {new Date(o.createdAt).toLocaleString("es-PE")}</span>
                             <p className="text-muted-foreground">{o.comment}</p>
                           </div>
                         </div>
@@ -388,7 +388,7 @@ function SessionDetail() {
                       <span className="font-mono text-[10px] uppercase tracking-wider bg-muted px-1.5 py-0.5 rounded">{r.status}</span>
                     </div>
                     <h3 className="font-semibold mt-0.5">{r.title}</h3>
-                    <p className="text-xs text-muted-foreground">{r.pages} págs · {r.format.toUpperCase()} · {new Date(r.generatedAt).toLocaleDateString("es-PE")}</p>
+                    <p suppressHydrationWarning className="text-xs text-muted-foreground">{r.pages} págs · {r.format.toUpperCase()} · {new Date(r.generatedAt).toLocaleDateString("es-PE")}</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => {
