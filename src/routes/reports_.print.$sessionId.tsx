@@ -195,11 +195,11 @@ Escribe en español, con tono formal y técnico. Si no hay críticos, indica que
                         className="absolute border-[3px]"
                         style={{
                           borderColor: color,
-                          backgroundColor: \`\${color}33\`,
-                          left: \`\${(f.bbox.x - f.bbox.w / 2) * 100}%\`,
-                          top: \`\${(f.bbox.y - f.bbox.h / 2) * 100}%\`,
-                          width: \`\${f.bbox.w * 100}%\`,
-                          height: \`\${f.bbox.h * 100}%\`,
+                          backgroundColor: `${color}33`,
+                          left: `${(f.bbox.x - f.bbox.w / 2) * 100}%`,
+                          top: `${(f.bbox.y - f.bbox.h / 2) * 100}%`,
+                          width: `${f.bbox.w * 100}%`,
+                          height: `${f.bbox.h * 100}%`,
                         }}
                       />
                     </div>
@@ -209,7 +209,7 @@ Escribe en español, con tono formal y técnico. Si no hay críticos, indica que
                         <p className="text-xs text-slate-500 font-mono mt-1">Evidencia: {ev.id.substring(0,8)}</p>
                       </div>
                       <div className="text-right">
-                        <span className={\`inline-block px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded \${labelColor}\`}>
+                        <span className={`inline-block px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded ${labelColor}`}>
                           {isRejected ? "RECHAZADO" : "VALIDADO"}
                         </span>
                         <p className="text-xs font-mono font-bold text-slate-500 mt-2">
