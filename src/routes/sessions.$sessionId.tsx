@@ -97,6 +97,15 @@ function SessionDetail() {
   const { data: report } = useSessionReport(sessionId);
   const createJob = useCreateJob(sessionId);
   const generateReport = useGenerateReport(sessionId);
+  const updateFinding = useUpdateFinding(sessionId);
+
+  const handleReject = (findingId: string) => {
+    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: "rejected" } }), {
+      loading: "Rechazando...",
+      success: "Hallazgo rechazado",
+      error: "Error al rechazar",
+    });
+  };
 
   const handleGenerateReport = () => {
     toast.info("Generando reporte técnico...");
@@ -315,11 +324,48 @@ function SessionDetail() {
 
         <TabsContent value="findings" className="mt-4 space-y-3">
           {findings.map((f) => {
+            const ev = evidence.find((e) => e.id === f.evidenceId);
             const obs = observations.filter((o) => o.findingId === f.id);
             return (
               <Card key={f.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {ev && (ev.storageUrl || ev.thumbnailUrl) && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="relative w-32 h-24 shrink-0 bg-black/10 rounded overflow-hidden cursor-pointer group">
+                            <img src={ev.storageUrl || ev.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="preview" />
+                            {f.bbox && (
+                              <div 
+                                className="absolute border-2 border-severity-critical bg-severity-critical/20"
+                                style={{
+                                  left: `${(f.bbox.x - f.bbox.w / 2) * 100}%`,
+                                  top: `${(f.bbox.y - f.bbox.h / 2) * 100}%`,
+                                  width: `${f.bbox.w * 100}%`,
+                                  height: `${f.bbox.h * 100}%`,
+                                }}
+                              />
+                            )}
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none shadow-2xl flex justify-center items-center overflow-hidden [&>button]:text-white">
+                           <div className="relative inline-block">
+                             <img src={ev.storageUrl || ev.thumbnailUrl} alt="full" className="max-w-full max-h-[95vh] object-contain" />
+                             {f.bbox && (
+                                <div 
+                                  className="absolute border-2 border-severity-critical bg-severity-critical/20"
+                                  style={{
+                                    left: `${(f.bbox.x - f.bbox.w / 2) * 100}%`,
+                                    top: `${(f.bbox.y - f.bbox.h / 2) * 100}%`,
+                                    width: `${f.bbox.w * 100}%`,
+                                    height: `${f.bbox.h * 100}%`,
+                                  }}
+                                />
+                             )}
+                           </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <SeverityBadge severity={f.severity} />
@@ -340,8 +386,8 @@ function SessionDetail() {
                     <div className="flex flex-col gap-1.5 shrink-0">
                       {f.status === "pending" || f.status === "needs_review" ? (
                         <>
-                          <ValidateDialog findingId={f.id} category={f.category} />
-                          <Button size="sm" variant="ghost" onClick={() => toast.error("Hallazgo rechazado")}>
+                          <ValidateDialog findingId={f.id} category={f.category} sessionId={sessionId} />
+                          <Button size="sm" variant="ghost" onClick={() => handleReject(f.id)}>
                             <XCircle className="h-3.5 w-3.5" /> Rechazar
                           </Button>
                         </>
@@ -568,9 +614,22 @@ function UploadEvidenceDialog({ isPrimary }: { isPrimary?: boolean }) {
   );
 }
 
-function ValidateDialog({ findingId, category }: { findingId: string; category: string }) {
+function ValidateDialog({ findingId, category, sessionId }: { findingId: string; category: string; sessionId: string }) {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const updateFinding = useUpdateFinding(sessionId);
+
+  const handleConfirm = () => {
+    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: "validated", validated_by: "system" } as any }), {
+      loading: "Validando...",
+      success: () => {
+        setOpen(false);
+        return "Hallazgo validado";
+      },
+      error: "Error al validar"
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -584,7 +643,9 @@ function ValidateDialog({ findingId, category }: { findingId: string; category: 
         <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Observación de validación…" rows={4} />
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => { setOpen(false); toast.success("Hallazgo validado"); }}>Confirmar validación</Button>
+          <Button onClick={handleConfirm} disabled={updateFinding.isPending}>
+            {updateFinding.isPending ? "Validando..." : "Confirmar validación"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
