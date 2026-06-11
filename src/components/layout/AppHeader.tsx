@@ -2,7 +2,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Bell, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useMe } from "@/lib/queries";
 
@@ -10,6 +10,7 @@ export function AppHeader() {
   const { data: me } = useMe();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
@@ -24,11 +25,13 @@ export function AppHeader() {
         Sistema operativo
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <Button asChild size="sm" className="font-mono uppercase tracking-wider text-xs">
-          <Link to="/sessions/new">
-            <Plus className="h-3.5 w-3.5" /> Nueva sesión
-          </Link>
-        </Button>
+        {pathname !== "/sessions" && (
+          <Button asChild size="sm" className="font-mono uppercase tracking-wider text-xs">
+            <Link to="/sessions/new">
+              <Plus className="h-3.5 w-3.5" /> Nueva sesión
+            </Link>
+          </Button>
+        )}
       </div>
     </header>
   );
