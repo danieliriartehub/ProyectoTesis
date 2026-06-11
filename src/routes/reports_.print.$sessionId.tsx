@@ -56,7 +56,12 @@ Datos recolectados por IA:
 - Hallazgos rechazados/validados manualmente: ${rejectedCount} rechazados
 - Tipos de defectos: ${JSON.stringify(counts)}
 
-Escribe en español, con tono formal y técnico. Proporciona una evaluación objetiva basada en la cantidad y tipos de defectos encontrados. NO devuelvas markdown, solo texto plano.`;
+Escribe en español, empleando terminología técnica y rigurosa propia de la ingeniería civil y patología estructural. 
+Tu respuesta debe contener exactamente dos partes:
+1. Evaluación: Una evaluación objetiva y técnica basada en la cantidad y tipos de defectos encontrados.
+2. Recomendaciones: Sugerencias técnicas de mitigación, reparación o mantenimiento basadas en las patologías detectadas.
+
+NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
           method: "POST",
