@@ -122,6 +122,14 @@ function SessionDetail() {
 
   const [threshold, setThreshold] = useState(0.65);
 
+  const getDynamicStatus = () => {
+    if (!session) return "Draft";
+    if (session.status === "Completed") return "Completed";
+    if (findings.length > 0) return "Review";
+    if (evidence.length > 0) return "Processing";
+    return session.status;
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem("infrainspect_settings");
     if (saved) {
@@ -200,7 +208,7 @@ function SessionDetail() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <SessionStatusBadge status={session.status} />
+              <SessionStatusBadge status={getDynamicStatus()} />
               <span className="font-mono text-xs text-muted-foreground">({session.code})</span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{session.title}</h1>
