@@ -39,6 +39,14 @@ function PrintReport() {
 
     if (!session) return;
 
+    const getDynamicStatus = () => {
+      if (!session) return "Draft";
+      if (session.status === "Completed") return "Completed";
+      if (findings.length > 0) return "Review";
+      if (evidence.length > 0) return "Processing";
+      return session.status;
+    };
+
     const generateSummary = async () => {
       try {
         const counts = findings.reduce((acc, f) => {
@@ -46,7 +54,6 @@ function PrintReport() {
           return acc;
         }, {} as Record<string, number>);
 
-        const criticalCount = findings.filter(f => f.severity === "critical").length;
         const rejectedCount = findings.filter(f => f.status === "rejected").length;
 
         const prompt = `Actúa como un ingeniero estructural experto. Genera un resumen ejecutivo de máximo 2 párrafos para un reporte de inspección de la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}). 
@@ -54,11 +61,10 @@ function PrintReport() {
 Datos recolectados por IA:
 - Total de evidencias revisadas: ${evidence.length}
 - Total de hallazgos detectados: ${findings.length}
-- Hallazgos críticos: ${criticalCount}
 - Hallazgos rechazados/validados manualmente: ${rejectedCount} rechazados
 - Tipos de defectos: ${JSON.stringify(counts)}
 
-Escribe en español, con tono formal y técnico. Si no hay críticos, indica que la estructura está sana pero recomienza mantenimiento preventivo. Si hay críticos, sugiere inspección física urgente. NO devuelvas markdown, solo texto plano.`;
+Escribe en español, con tono formal y técnico. Proporciona una evaluación objetiva basada en la cantidad y tipos de defectos encontrados. NO devuelvas markdown, solo texto plano.`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
           method: "POST",
@@ -139,7 +145,7 @@ Escribe en español, con tono formal y técnico. Si no hay críticos, indica que
           <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
             <CheckCircle2 className="h-5 w-5 text-slate-400 mb-2" />
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estado</p>
-            <p className="font-semibold text-slate-800">{session.status}</p>
+            <p className="font-semibold text-slate-800">{getDynamicStatus()}</p>
           </div>
         </section>
 
@@ -165,10 +171,6 @@ Escribe en español, con tono formal y técnico. Si no hay críticos, indica que
             <div className="flex-1 p-6 bg-slate-900 text-white rounded-xl">
               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Total</p>
               <p className="text-5xl font-black">{findings.length}</p>
-            </div>
-            <div className="flex-1 p-6 bg-red-50 border border-red-100 text-red-900 rounded-xl">
-              <p className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Críticos</p>
-              <p className="text-5xl font-black">{findings.filter(f => f.severity === "critical").length}</p>
             </div>
           </div>
         </section>
