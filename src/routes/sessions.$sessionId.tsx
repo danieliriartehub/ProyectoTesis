@@ -621,7 +621,7 @@ function ValidateDialog({ findingId, category, sessionId }: { findingId: string;
   const updateFinding = useUpdateFinding(sessionId);
 
   const handleConfirm = () => {
-    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: "validated", validated_by: "system" } as any }), {
+    toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: "validated" } as any }), {
       loading: "Validando...",
       success: () => {
         setOpen(false);
