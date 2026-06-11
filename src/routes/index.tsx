@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Cpu,
   ArrowUpRight,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -37,15 +38,7 @@ export const Route = createFileRoute("/")(({
   component: Dashboard,
 }) as ReturnType<typeof createFileRoute>);
 
-const trendData = [
-  { day: "Vie", findings: 12, critical: 1 },
-  { day: "Sáb", findings: 18, critical: 2 },
-  { day: "Dom", findings: 9, critical: 0 },
-  { day: "Lun", findings: 24, critical: 3 },
-  { day: "Mar", findings: 31, critical: 4 },
-  { day: "Mié", findings: 28, critical: 2 },
-  { day: "Jue", findings: 41, critical: 5 },
-];
+import { useMemo } from "react";
 
 function Dashboard() {
   const { data: sessionsData } = useSessions({ limit: 100 });
@@ -57,9 +50,9 @@ function Dashboard() {
   const sessionIds = sessions.map((s) => s.id);
   const { data: allJobs = [] } = useAllJobs(sessionIds);
 
-  const activeSessions = sessions.filter((s) =>
-    ["Capturing", "Processing", "Review"].includes(s.status),
-  );
+  const activeSessions = sessions
+    .filter((s) => ["Capturing", "Processing", "Review"].includes(s.status))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   const critical = findings.filter((f) => f.severity === "critical").length;
   const high = findings.filter((f) => f.severity === "high").length;
   const medium = findings.filter((f) => f.severity === "medium").length;
@@ -75,6 +68,42 @@ function Dashboard() {
     { name: "Bajo", value: low, color: "var(--severity-low)" },
     { name: "Info", value: info, color: "var(--severity-info)" },
   ];
+
+  const trendData = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const dayStr = d.toLocaleDateString("es-PE", { weekday: 'short' });
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      
+      const dayFindings = findings.filter((f) => {
+        const time = new Date(f.createdAt).getTime();
+        return time >= dayStart && time < dayEnd;
+      });
+
+      return {
+        day: dayStr.charAt(0).toUpperCase() + dayStr.slice(1),
+        findings: dayFindings.length,
+        critical: dayFindings.filter((f) => f.severity === 'critical').length
+      };
+    });
+  }, [findings]);
+
+  const infrastructureData = useMemo(() => {
+    const counts = sessions.reduce((acc, s) => {
+      const type = s.infrastructure.type || "Otros";
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#64748b"];
+    return Object.entries(counts).map(([name, value], i) => ({
+      name,
+      value,
+      color: colors[i % colors.length]
+    })).sort((a, b) => b.value - a.value);
+  }, [sessions]);
 
   return (
     <div className="p-6 space-y-6">
@@ -253,29 +282,36 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* AI Jobs status */}
+      {/* Infrastructure breakdown */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Activity className="h-3.5 w-3.5" /> Estado IA
+            <PieChartIcon className="h-3.5 w-3.5" /> Activos por Tipo
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {allJobs.slice(0, 5).map((j) => (
-            <div key={j.id} className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-mono">{j.model}</span>
-                <span className="text-muted-foreground">{j.progress}%</span>
-              </div>
-              <Progress value={j.progress} className="h-1" />
-              <div className="font-mono text-[10px] uppercase text-muted-foreground">
-                {j.status} · {j.findingsProduced} hallazgos
-              </div>
-            </div>
-          ))}
-          {allJobs.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">Sin jobs activos</p>
-          )}
+        <CardContent>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={infrastructureData} layout="vertical" margin={{ left: 8 }}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} />
+                <YAxis dataKey="name" type="category" stroke="var(--muted-foreground)" fontSize={11} width={100} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {infrastructureData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
     </div>
