@@ -177,6 +177,10 @@ function SessionDetail() {
       } catch (e) {}
     }
 
+    if (session?.status === "Draft" || session?.status === "Capturing") {
+      updateSession.mutate({ status: "Processing" });
+    }
+
     toast.info(`Iniciando análisis para ${toAnalyze.length} evidencias con ${targetModel.toUpperCase()}...`);
     
     for (const ev of toAnalyze) {
@@ -224,7 +228,7 @@ function SessionDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <UploadEvidenceDialog isPrimary={evidence.length === 0} />
+            <UploadEvidenceDialog isPrimary={evidence.length === 0} sessionStatus={session.status} />
             <Button 
               variant={evidence.length > 0 && session.status !== "Review" && session.status !== "Completed" ? "default" : "outline"}
               onClick={handleLaunchAnalysis} 
@@ -575,13 +579,14 @@ function StatBox({ label, value, accent, children }: { label: string; value: str
   );
 }
 
-function UploadEvidenceDialog({ isPrimary }: { isPrimary?: boolean }) {
+function UploadEvidenceDialog({ isPrimary, sessionStatus }: { isPrimary?: boolean; sessionStatus?: string }) {
   const { sessionId } = Route.useParams();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"image" | "video" | "pdf" | "rtmp">("image");
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const uploadMutation = useUploadEvidence(sessionId);
+  const updateSession = useUpdateSession(sessionId);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -604,6 +609,9 @@ function UploadEvidenceDialog({ isPrimary }: { isPrimary?: boolean }) {
             setFile(null);
             setNotes("");
             toast.success("Evidencia cargada exitosamente");
+            if (sessionStatus === "Draft") {
+              updateSession.mutate({ status: "Capturing" });
+            }
           },
           onError: (err: any) => {
             toast.error(err.message || "Error al cargar la evidencia");
