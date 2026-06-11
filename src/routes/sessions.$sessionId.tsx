@@ -150,7 +150,7 @@ function SessionDetail() {
   };
 
   const handleLaunchAnalysis = () => {
-    const toAnalyze = evidence.filter(e => e.type !== "rtmp" && !jobs.some(j => j.evidenceId === e.id));
+    const toAnalyze = evidence.filter(e => e.type !== "rtmp" && (jobs.length > 0 ? true : !jobs.some(j => j.evidenceId === e.id)));
     if (toAnalyze.length === 0) {
       toast.info("No hay nuevas evidencias estáticas para analizar.");
       return;
@@ -200,8 +200,8 @@ function SessionDetail() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-muted-foreground">{session.code}</span>
               <SessionStatusBadge status={session.status} />
+              <span className="font-mono text-xs text-muted-foreground">({session.code})</span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{session.title}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
@@ -220,7 +220,7 @@ function SessionDetail() {
               disabled={createJob.isPending || evidence.length === 0}
             >
               {createJob.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />} 
-              {createJob.isPending ? "Procesando..." : "Procesar con IA"}
+              {createJob.isPending ? "Procesando..." : (jobs.length > 0 ? "Reprocesar" : "Procesar con IA")}
             </Button>
             <Button 
               variant={(session.status === "Review" || session.status === "Completed") ? "default" : "outline"}
@@ -378,7 +378,7 @@ function SessionDetail() {
                             <img src={ev.storageUrl || ev.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="preview" />
                             {f.bbox && (
                               <div 
-                                className="absolute border-2 border-severity-critical bg-severity-critical/20"
+                                className={`absolute border-[3px] ${displayStatus === "validated" ? "border-[#39ff14] bg-[#39ff14]/20 shadow-[0_0_8px_#39ff14]" : "border-[#ff073a] bg-[#ff073a]/20 shadow-[0_0_8px_#ff073a]"}`}
                                 style={{
                                   left: `${(f.bbox.x - f.bbox.w / 2) * 100}%`,
                                   top: `${(f.bbox.y - f.bbox.h / 2) * 100}%`,
@@ -394,7 +394,7 @@ function SessionDetail() {
                              <img src={ev.storageUrl || ev.thumbnailUrl} alt="full" className="max-w-full max-h-[95vh] object-contain" />
                              {f.bbox && (
                                 <div 
-                                  className="absolute border-2 border-severity-critical bg-severity-critical/20"
+                                  className={`absolute border-[3px] ${displayStatus === "validated" ? "border-[#39ff14] bg-[#39ff14]/20 shadow-[0_0_8px_#39ff14]" : "border-[#ff073a] bg-[#ff073a]/20 shadow-[0_0_8px_#ff073a]"}`}
                                   style={{
                                     left: `${(f.bbox.x - f.bbox.w / 2) * 100}%`,
                                     top: `${(f.bbox.y - f.bbox.h / 2) * 100}%`,
@@ -474,12 +474,12 @@ function SessionDetail() {
                 <div key={j.id} className="p-4 flex items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm">{j.model}</span>
+                      <span className="font-semibold text-sm">Ejecución de Evaluación con InfraInspect AI - {j.model.toUpperCase()}</span>
                       <JobStatusBadge status={j.status} />
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground font-mono">
                       Evidencia {j.evidenceId} · {j.findingsProduced} hallazgos
-                      {j.inferenceTimeMs && ` · ${(j.inferenceTimeMs / 1000).toFixed(1)}s`}
+                      {j.createdAt && ` · ${new Date(j.createdAt).toLocaleString("es-PE")}`}
                       {j.error && <span className="text-destructive"> · {j.error}</span>}
                     </div>
                   </div>
