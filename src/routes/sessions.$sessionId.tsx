@@ -58,6 +58,7 @@ import {
   useCreateJob,
   useGenerateReport,
   useUpdateFinding,
+  useUpdateSession,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
@@ -122,13 +123,7 @@ function SessionDetail() {
 
   const [threshold, setThreshold] = useState(0.65);
 
-  const getDynamicStatus = () => {
-    if (!session) return "Draft";
-    if (session.status === "Completed") return "Completed";
-    if (findings.length > 0) return "Review";
-    if (evidence.length > 0) return "Processing";
-    return session.status;
-  };
+  const updateSession = useUpdateSession(sessionId);
 
   useEffect(() => {
     const saved = localStorage.getItem("infrainspect_settings");
@@ -151,6 +146,11 @@ function SessionDetail() {
 
   const handleGenerateReport = () => {
     toast.info("Generando reporte técnico y abriendo vista de impresión...");
+    
+    if (session?.status !== "Review" && session?.status !== "Completed") {
+      updateSession.mutate({ status: "Review" });
+    }
+
     generateReport.mutate(undefined, {
       onSuccess: () => {
         toast.success("Reporte listo para imprimir");
@@ -211,7 +211,7 @@ function SessionDetail() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <SessionStatusBadge status={getDynamicStatus()} />
+              <SessionStatusBadge status={session.status} />
               <span className="font-mono text-xs text-muted-foreground">({session.code})</span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{session.title}</h1>
@@ -234,12 +234,26 @@ function SessionDetail() {
               {createJob.isPending ? "Procesando..." : (jobs.length > 0 ? "Reprocesar" : "Procesar con IA")}
             </Button>
             <Button 
-              variant={findings.length > 0 ? "default" : "outline"}
+              variant="outline"
               onClick={handleGenerateReport} 
               disabled={generateReport.isPending || findings.length === 0}
             >
               <FileText className="h-4 w-4 mr-2" /> {generateReport.isPending ? "Generando..." : "Generar reporte"}
             </Button>
+            {session.status === "Review" && (
+              <Button 
+                variant="default"
+                onClick={() => {
+                  toast.promise(updateSession.mutateAsync({ status: "Completed" }), {
+                    loading: "Finalizando sesión...",
+                    success: "Sesión finalizada",
+                    error: "Error al finalizar sesión"
+                  });
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Terminar Sesión
+              </Button>
+            )}
           </div>
         </div>
       </div>

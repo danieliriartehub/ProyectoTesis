@@ -39,14 +39,6 @@ function PrintReport() {
 
     if (!session) return;
 
-    const getDynamicStatus = () => {
-      if (!session) return "Draft";
-      if (session.status === "Completed") return "Completed";
-      if (findings.length > 0) return "Review";
-      if (evidence.length > 0) return "Processing";
-      return session.status;
-    };
-
     const generateSummary = async () => {
       try {
         const counts = findings.reduce((acc, f) => {
@@ -145,7 +137,7 @@ Escribe en español, con tono formal y técnico. Proporciona una evaluación obj
           <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
             <CheckCircle2 className="h-5 w-5 text-slate-400 mb-2" />
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estado</p>
-            <p className="font-semibold text-slate-800">{getDynamicStatus()}</p>
+            <p className="font-semibold text-slate-800">{session.status}</p>
           </div>
         </section>
 
