@@ -59,7 +59,7 @@ function PrintReport() {
 
         const rejectedCount = findings.filter(f => f.status === "rejected").length;
 
-        const prompt = `Actúa como un ingeniero estructural experto. Genera un resumen ejecutivo de máximo 2 párrafos para un reporte de inspección de la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}). 
+        const prompt = `Actúa como un ingeniero estructural experto. Genera un resumen ejecutivo de máximo 3 párrafos para un reporte de inspección de la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}). 
         
 Datos recolectados por IA:
 - Total de evidencias revisadas: ${evidence.length}
@@ -68,11 +68,12 @@ Datos recolectados por IA:
 - Tipos de defectos: ${JSON.stringify(counts)}
 
 Escribe en español, empleando terminología técnica y rigurosa propia de la ingeniería civil y patología estructural. 
-Tu respuesta debe contener exactamente dos partes:
-1. Evaluación: Una evaluación objetiva y técnica basada en la cantidad y tipos de defectos encontrados.
-2. Recomendaciones: Sugerencias técnicas de mitigación, reparación o mantenimiento basadas en las patologías detectadas.
+Tu respuesta debe contener exactamente tres partes:
+1. EVALUACIÓN: Una evaluación objetiva y técnica basada en la cantidad y tipos de defectos encontrados.
+2. RECOMENDACIONES: Sugerencias técnicas de mitigación, reparación o mantenimiento.
+3. MATERIALES Y ENSAYOS: Una lista de materiales estándar o ensayos normativos sugeridos para reparar estas patologías (Ej. Resina epóxica, Ensayo de ultrasonido).
 
-NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
+NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con mayúsculas para los títulos.`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`, {
           method: "POST",
@@ -137,19 +138,50 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
           @page { margin: 15mm; size: A4; }
         }
         body { background: white; } /* Force white background for this route */
+        .cover-page { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 280mm; background: #0f172a; color: white; text-align: center; }
+        .cover-logo { margin-bottom: 2rem; }
       `}} />
 
-      <div className="max-w-[210mm] mx-auto bg-white p-8 md:p-12">
-        {/* Cabecera / Portada */}
-        <header className="border-b-4 border-slate-900 pb-8 mb-8 flex justify-between items-end">
-          <div>
-            <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter mb-2">Reporte de Inspección</h1>
-            <h2 className="text-xl font-bold text-slate-600">{session.title}</h2>
+      {/* PORTADA (COVER PAGE) */}
+      <div className="cover-page page-break relative overflow-hidden p-12">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500 via-slate-900 to-black"></div>
+        <div className="relative z-10 w-full max-w-[210mm] mx-auto text-left">
+          <div className="flex items-center gap-3 mb-24">
+            <div className="bg-primary text-primary-foreground p-3 rounded-xl">
+              <BrainCircuit className="h-10 w-10" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight leading-none uppercase">InfraInspect</h1>
+              <p className="text-sm font-mono text-blue-400 tracking-widest uppercase">Intelligence</p>
+            </div>
           </div>
-          <div className="text-right text-sm text-slate-500 font-mono">
+          
+          <h2 className="text-sm font-mono text-blue-400 tracking-widest uppercase mb-4 border-b border-blue-400/30 pb-2 inline-block">Reporte Técnico Estructural</h2>
+          <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-tight mb-8 text-white">{session.title}</h1>
+          
+          <div className="grid grid-cols-2 gap-8 border-t border-slate-700 pt-8 mt-auto w-3/4">
+            <div>
+              <p className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">CÓDIGO DE SESIÓN</p>
+              <p className="text-lg font-semibold">{session.code}</p>
+            </div>
+            <div>
+              <p className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">FECHA DE EMISIÓN</p>
+              <p className="text-lg font-semibold">{new Date().toLocaleDateString("es-PE")}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <div className="max-w-[210mm] mx-auto bg-white p-12 page-break">
+        {/* Cabecera Interna */}
+        <header className="border-b-2 border-slate-200 pb-4 mb-8 flex justify-between items-end">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{session.title}</h2>
+          </div>
+          <div className="text-right text-xs text-slate-500 font-mono">
             <p><strong>CÓDIGO:</strong> {session.code}</p>
-            <p><strong>FECHA:</strong> {new Date().toLocaleDateString("es-PE")}</p>
-            <p className="text-slate-400 mt-2">Generado por InfraInspect AI</p>
+            <p className="text-slate-400">Pág. 2</p>
           </div>
         </header>
 
@@ -180,27 +212,61 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
         {/* Resumen IA */}
         <section className="mb-12 no-break">
           <div className="flex items-center gap-2 mb-4">
-            <BrainCircuit className="h-6 w-6 text-indigo-600" />
-            <h3 className="text-xl font-bold text-slate-800">Resumen Ejecutivo (AI)</h3>
+            <BrainCircuit className="h-6 w-6 text-primary" />
+            <h3 className="text-xl font-black uppercase tracking-tight text-slate-800">Resumen Experto (AI)</h3>
           </div>
-          <div className="p-6 bg-indigo-50/50 border border-indigo-100 rounded-xl">
+          <div className="p-6 bg-slate-50 border-l-4 border-primary shadow-sm">
             {aiLoading ? (
               <p className="text-slate-500 animate-pulse font-mono text-sm">Generando insights estructurales con Gemini AI...</p>
             ) : (
-              <p className="text-slate-700 leading-relaxed">{aiSummary}</p>
+              <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap">{aiSummary}</div>
             )}
           </div>
         </section>
 
-        {/* Resumen Estadístico */}
+        {/* Resumen Estadístico y Matriz de Severidad */}
         <section className="mb-12 no-break">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Desglose de Hallazgos</h3>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 p-6 bg-slate-900 text-white rounded-xl">
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Total</p>
-              <p className="text-5xl font-black">{findings.length}</p>
+          <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 mb-6 border-b-2 border-slate-100 pb-2">Matriz de Severidad y Riesgos</h3>
+          
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-center">
+              <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1">Críticos</p>
+              <p className="text-4xl font-black text-red-600">{findings.filter(f => f.severity === 'critical').length}</p>
+            </div>
+            <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg text-center">
+              <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-1">Altos</p>
+              <p className="text-4xl font-black text-orange-600">{findings.filter(f => f.severity === 'high').length}</p>
+            </div>
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-center">
+              <p className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">Medios</p>
+              <p className="text-4xl font-black text-amber-600">{findings.filter(f => f.severity === 'medium').length}</p>
+            </div>
+            <div className="p-4 bg-green-50 border border-green-100 rounded-lg text-center">
+              <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-1">Bajos</p>
+              <p className="text-4xl font-black text-green-600">{findings.filter(f => f.severity === 'low').length}</p>
             </div>
           </div>
+          
+          {/* Top Riesgos */}
+          {findings.filter(f => f.severity === 'critical' || f.severity === 'high').length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-bold text-sm text-red-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Top Hallazgos de Atención Inmediata
+              </h4>
+              <ul className="space-y-2">
+                {findings
+                  .filter(f => f.severity === 'critical' || f.severity === 'high')
+                  .sort((a, b) => (a.severity === 'critical' ? -1 : 1))
+                  .slice(0, 5)
+                  .map(f => (
+                    <li key={f.id} className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                      <span className="font-semibold text-slate-800">{getCategoryName(f.category)}</span>
+                      <span className="font-mono text-xs text-red-600">{f.severity.toUpperCase()} · Conf: {Math.round(f.confidence * 100)}%</span>
+                    </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         {/* Anexo Fotográfico */}
@@ -233,7 +299,7 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
                         }}
                       />
                     </div>
-                    <div className="p-4 flex justify-between items-start">
+                    <div className="p-4 bg-white flex justify-between items-start">
                       <div>
                         <p className="font-bold text-slate-800 uppercase tracking-wide">{getCategoryName(f.category)}</p>
                         <p className="text-xs text-slate-500 font-mono mt-1">Evidencia: {ev.id.substring(0,8)}</p>
@@ -242,8 +308,8 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
                         <span className={`inline-block px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded ${labelColor}`}>
                           {isRejected ? "RECHAZADO" : "VALIDADO"}
                         </span>
-                        <p className="text-xs font-mono font-bold text-slate-500 mt-2">
-                          Conf: {Math.round(f.confidence * 100)}%
+                        <p className={`text-xs font-mono font-bold mt-2 ${f.severity === 'critical' ? 'text-red-600' : 'text-slate-500'}`}>
+                          SEV: {f.severity.toUpperCase()}
                         </p>
                       </div>
                     </div>
