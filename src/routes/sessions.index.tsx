@@ -153,7 +153,7 @@ function SessionsList() {
                 <TableCell className="text-right font-mono">
                   {s.findingsCount}
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableCell className="font-mono text-xs text-muted-foreground" suppressHydrationWarning>
                   {new Date(s.updatedAt).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}
                 </TableCell>
               </TableRow>

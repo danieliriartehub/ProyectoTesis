@@ -528,7 +528,7 @@ function SessionDetail() {
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground font-mono">
                       Evidencia {j.evidenceId} · {j.findingsProduced} hallazgos
-                      {j.createdAt && ` · ${new Date(j.createdAt).toLocaleString("es-PE")}`}
+                      {j.createdAt && <span suppressHydrationWarning> · {new Date(j.createdAt).toLocaleString("es-PE")}</span>}
                       {j.error && <span className="text-destructive"> · {j.error}</span>}
                     </div>
                   </div>
