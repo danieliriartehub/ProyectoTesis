@@ -27,4 +27,8 @@ export const jobsApi = {
   update(id: string, data: JobUpdate): Promise<AnalysisJob> {
     return api.patch(`/api/v1/analysis-jobs/${id}`, data);
   },
+
+  delete(id: string): Promise<void> {
+    return api.delete(`/api/v1/analysis-jobs/${id}`);
+  },
 };

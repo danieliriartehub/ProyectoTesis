@@ -60,6 +60,7 @@ import {
   useGenerateReport,
   useUpdateFinding,
   useUpdateSession,
+  useDeleteJob,
 } from "@/lib/queries";
 import {
   SessionStatusBadge,
@@ -119,6 +120,7 @@ function SessionDetail() {
   const { data: jobs = [] } = useSessionJobs(sessionId);
   const { data: report } = useSessionReport(sessionId);
   const createJob = useCreateJob(sessionId);
+  const deleteJob = useDeleteJob(sessionId);
   const generateReport = useGenerateReport(sessionId);
   const updateFinding = useUpdateFinding(sessionId);
 
@@ -530,9 +532,30 @@ function SessionDetail() {
                       {j.error && <span className="text-destructive"> · {j.error}</span>}
                     </div>
                   </div>
-                  <div className="w-40">
-                    <Progress value={j.progress} className="h-1.5" />
-                    <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">{j.progress}%</div>
+                  <div className="w-40 flex flex-col items-end gap-2">
+                    <div className="w-full">
+                      <Progress value={j.progress} className="h-1.5" />
+                      <div className="text-right font-mono text-[10px] text-muted-foreground mt-1">{j.progress}%</div>
+                    </div>
+                    {(j.status === 'running' || j.status === 'queued' || j.status === 'failed') && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive text-xs"
+                        onClick={() => {
+                          if (confirm("¿Estás seguro de cancelar o eliminar este Job? La evidencia volverá a estar disponible para procesarse.")) {
+                            toast.promise(deleteJob.mutateAsync(j.id), {
+                              loading: "Cancelando job...",
+                              success: "Job cancelado con éxito",
+                              error: "Error al cancelar job"
+                            });
+                          }
+                        }}
+                      >
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Cancelar
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -145,6 +145,17 @@ export function useCreateJob(sessionId: string) {
   });
 }
 
+export function useDeleteJob(sessionId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) => jobsApi.delete(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QK.sessionJobs(sessionId) });
+      qc.invalidateQueries({ queryKey: QK.sessionEvidences(sessionId) });
+    },
+  });
+}
+
 /** All jobs across sessions — used in /jobs page */
 export function useAllJobs(sessionIds: string[]) {
   return useQuery({
