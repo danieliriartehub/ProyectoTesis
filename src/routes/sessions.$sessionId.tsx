@@ -449,9 +449,9 @@ function SessionDetail() {
                     )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                          conf {Math.round(f.confidence * 100)}%
-                        </span>
+                        <Badge variant={f.severity === 'critical' ? 'destructive' : 'secondary'} className="uppercase">
+                          {f.severity}
+                        </Badge>
                       </div>
                       <h3 className="font-semibold mt-2">{getCategoryName(f.category)}</h3>
                       <p className="text-sm text-muted-foreground mt-1">{f.description}</p>

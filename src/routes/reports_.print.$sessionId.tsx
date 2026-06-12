@@ -261,7 +261,7 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con
                   .map(f => (
                     <li key={f.id} className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
                       <span className="font-semibold text-slate-800">{getCategoryName(f.category)}</span>
-                      <span className="font-mono text-xs text-red-600">{f.severity.toUpperCase()} · Conf: {Math.round(f.confidence * 100)}%</span>
+                      <span className="font-mono text-xs text-red-600">{f.severity.toUpperCase()}</span>
                     </li>
                 ))}
               </ul>
