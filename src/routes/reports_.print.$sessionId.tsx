@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSession, useSessionEvidences, useSessionFindings } from "@/lib/queries";
 import { BrainCircuit, Fingerprint, MapPin, Calendar, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { FINDINGS_TRANSLATIONS } from "@/routes/sessions.$sessionId";
+// @ts-ignore
+import html2pdf from "html2pdf.js";
 
 export const Route = createFileRoute("/reports_/print/$sessionId")({
   head: () => ({ meta: [{ title: "Reporte Técnico — InfraInspect AI" }] }),
@@ -30,10 +32,18 @@ function PrintReport() {
       } catch (e) {}
     }
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreview = urlParams.get('preview') === 'true';
+    const isDownload = urlParams.get('download') === 'true';
+
     if (!geminiKey) {
       setAiSummary("No se configuró una API Key de Gemini. El resumen automático no está disponible.");
       setAiLoading(false);
-      setTimeout(() => window.print(), 1000);
+      if (isDownload) {
+        setTimeout(() => triggerPdfDownload(), 1000);
+      } else if (!isPreview) {
+        setTimeout(() => window.print(), 1000);
+      }
       return;
     }
 
@@ -81,8 +91,12 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
         setAiSummary("Error de conexión al generar el resumen de IA.");
       } finally {
         setAiLoading(false);
-        // Wait for images to load before printing
-        setTimeout(() => window.print(), 1500);
+        // Wait for images to load before printing or downloading
+        if (isDownload) {
+          setTimeout(() => triggerPdfDownload(), 1500);
+        } else if (!isPreview) {
+          setTimeout(() => window.print(), 1500);
+        }
       }
     };
 
@@ -92,10 +106,23 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
   if (sessionLoading) return <div className="p-12 text-center">Cargando reporte...</div>;
   if (!session) return <div className="p-12 text-center text-red-500">Sesión no encontrada.</div>;
 
+  const triggerPdfDownload = () => {
+    const element = document.getElementById("report-content");
+    if (!element) return;
+    const opt = {
+      margin:       10,
+      filename:     `Reporte-${session.code}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
   const getCategoryName = (cat: string) => (FINDINGS_TRANSLATIONS as any)[cat] || cat;
 
   return (
-    <div className="bg-white text-black min-h-screen w-full font-sans print-container">
+    <div id="report-content" className="bg-white text-black min-h-screen w-full font-sans print-container">
       {/* Estilos específicos de impresión */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {

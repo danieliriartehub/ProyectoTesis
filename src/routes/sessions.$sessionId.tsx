@@ -524,34 +524,21 @@ function SessionDetail() {
         </TabsContent>
 
         <TabsContent value="reports" className="mt-4 space-y-3">
-          {reports.map((r) => (
-            <Card key={r.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded bg-primary/15 text-primary flex items-center justify-center">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-muted-foreground">{r.code}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-wider bg-muted px-1.5 py-0.5 rounded">{r.status}</span>
-                    </div>
-                    <h3 className="font-semibold mt-0.5">{r.title}</h3>
-                    <p suppressHydrationWarning className="text-xs text-muted-foreground">{r.pages} págs · {r.format.toUpperCase()} · {new Date(r.generatedAt).toLocaleDateString("es-PE")}</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => {
-                  if (r.fileUrl) window.open(r.fileUrl, "_blank");
-                  else toast.info("El PDF aún no ha sido subido. (Generador PDF en desarrollo Fase 5)");
-                }}>
-                  <Download className="h-3.5 w-3.5" /> Descargar
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-          {reports.length === 0 && (
-            <Card><CardContent className="text-center py-12 text-muted-foreground">Sin reportes generados aún.</CardContent></Card>
-          )}
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-lg">Vista Previa del Reporte de IA</h3>
+            <Button onClick={() => {
+              window.open(`/reports/print/${sessionId}?download=true`, "_blank");
+            }}>
+              <Download className="h-4 w-4 mr-2" /> Descargar PDF
+            </Button>
+          </div>
+          <div className="border border-border rounded-lg overflow-hidden bg-white/5 relative">
+            <iframe 
+              src={`/reports/print/${sessionId}?preview=true`} 
+              className="w-full h-[70vh] bg-white border-0"
+              title="Report Preview"
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
