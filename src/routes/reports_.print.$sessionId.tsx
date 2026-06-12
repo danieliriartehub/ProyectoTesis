@@ -59,6 +59,17 @@ function PrintReport() {
 
         const rejectedCount = findings.filter(f => f.status === "rejected").length;
 
+        const cacheKey = `ai_summary_${sessionId}_${evidence.length}_${findings.length}_${rejectedCount}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          setAiSummary(cached);
+          setAiLoading(false);
+          if (isDownload) {
+            setTimeout(() => { window.print(); }, 1500);
+          }
+          return;
+        }
+
         const prompt = `Actúa como un ingeniero estructural experto. Genera un resumen ejecutivo de máximo 3 párrafos para un reporte de inspección de la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}). 
         
 Datos recolectados por IA:
@@ -85,7 +96,9 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con
 
         const data = await response.json();
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          setAiSummary(data.candidates[0].content.parts[0].text);
+          const text = data.candidates[0].content.parts[0].text;
+          setAiSummary(text);
+          localStorage.setItem(cacheKey, text);
         } else {
           setAiSummary("No se pudo generar el resumen. Verifica la clave API.");
         }

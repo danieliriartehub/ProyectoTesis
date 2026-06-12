@@ -149,6 +149,8 @@ function SessionDetail() {
     }
   }, []);
 
+  const [activeTab, setActiveTab] = useState("overview");
+
   const handleToggleStatus = (findingId: string, currentDisplayStatus: string) => {
     const newStatus = currentDisplayStatus === "validated" ? "rejected" : "validated";
     toast.promise(updateFinding.mutateAsync({ id: findingId, data: { status: newStatus } as any }), {
@@ -159,16 +161,16 @@ function SessionDetail() {
   };
 
   const handleGenerateReport = () => {
-    toast.info("Generando reporte técnico y abriendo vista de impresión...");
-    
     if (session?.status !== "Review" && session?.status !== "Completed") {
       updateSession.mutate({ status: "Review" });
     }
 
+    // Call the backend to create the report record if it doesn't exist
     generateReport.mutate(undefined, {
       onSuccess: () => {
-        toast.success("Reporte listo para imprimir");
-        window.open(`/reports/print/${session?.id}`, "_blank");
+        // Go to reports tab to view/download
+        setActiveTab("reports");
+        toast.success("Vista previa del reporte generada");
       },
       onError: () => toast.error("Hubo un error al registrar el reporte"),
     });
@@ -296,7 +298,7 @@ function SessionDetail() {
         <StatBox label="Jobs IA" value={jobs.length} />
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="font-mono uppercase tracking-widest text-[10px]">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="evidence">Evidencias ({evidence.length})</TabsTrigger>
@@ -463,7 +465,26 @@ function SessionDetail() {
                         </Badge>
                       </div>
                       <h3 className="font-semibold mt-2">{getCategoryName(f.category)}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{f.description}</p>
+                      {!f.description.includes("con confianza") && (
+                        <p className="text-sm text-muted-foreground mt-1">{f.description}</p>
+                      )}
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <div className="flex gap-[2px]">
+                          {[1, 2, 3, 4, 5].map((level) => {
+                            const active = level <= Math.round(f.confidence * 5);
+                            let colorClass = "bg-muted";
+                            if (active) {
+                              if (f.confidence > 0.8) colorClass = "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]";
+                              else if (f.confidence > 0.5) colorClass = "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]";
+                              else colorClass = "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]";
+                            }
+                            return (
+                              <div key={level} className={`h-1.5 w-4 rounded-[1px] transition-colors ${colorClass}`} />
+                            );
+                          })}
+                        </div>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">Certeza AI</span>
+                      </div>
                       {f.recommendation && (
                         <div className="mt-2 rounded border border-border bg-muted/40 p-2 text-xs">
                           <span className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground">Recomendación · </span>
