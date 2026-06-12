@@ -277,12 +277,18 @@ function SessionDetail() {
       {/* Quick stats */}
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatBox label="Progreso" value={`${session.progress}%`}>
-          <Progress 
-            value={session.progress} 
-            className="h-1.5 mt-3" 
-          />
-        </StatBox>
+        {(() => {
+          const calculatedProgress = session.status === "Completed" ? 100 : session.status === "Review" ? 90 : session.status === "Processing" ? 60 : session.status === "Capturing" ? 30 : 10;
+          return (
+            <StatBox label="Progreso" value={`${calculatedProgress}%`}>
+              <Progress 
+                value={calculatedProgress} 
+                className="h-1.5 mt-3" 
+                indicatorClassName={calculatedProgress === 100 ? "bg-[#22c55e]" : ""}
+              />
+            </StatBox>
+          );
+        })()}
         <StatBox label="Evidencias" value={evidence.length} />
         <StatBox label="Hallazgos" value={findings.length} />
         <StatBox label="Jobs IA" value={jobs.length} />
