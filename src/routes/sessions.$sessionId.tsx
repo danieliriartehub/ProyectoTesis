@@ -615,48 +615,52 @@ function UploadEvidenceDialog({ isPrimary, sessionStatus }: { isPrimary?: boolea
   const { sessionId } = Route.useParams();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"image" | "video" | "pdf" | "rtmp">("image");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [notes, setNotes] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const uploadMutation = useUploadEvidence(sessionId);
   const updateSession = useUpdateSession(sessionId);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(Array.from(e.target.files));
     }
   };
 
-  const handleUpload = () => {
-    if (type !== "rtmp" && !file) {
-      toast.error("Por favor selecciona un archivo");
+  const handleUpload = async () => {
+    if (type !== "rtmp" && files.length === 0) {
+      toast.error("Por favor selecciona al menos un archivo");
       return;
     }
     
-    if (type !== "rtmp" && file) {
-      uploadMutation.mutate(
-        { file, meta: { session_id: sessionId, type, tags: notes } },
-        {
-          onSuccess: () => {
-            setOpen(false);
-            setFile(null);
-            setNotes("");
-            toast.success("Evidencia cargada exitosamente");
-            if (sessionStatus === "Draft") {
-              updateSession.mutate({ status: "Capturing" });
-            }
-          },
-          onError: (err: any) => {
-            toast.error(err.message || "Error al cargar la evidencia");
-          }
+    if (type !== "rtmp" && files.length > 0) {
+      setIsUploading(true);
+      try {
+        // Ejecutar las subidas de forma secuencial o en paralelo
+        // Usamos en paralelo con Promise.all (hasta el límite del navegador)
+        await Promise.all(files.map(file => 
+          uploadMutation.mutateAsync({ file, meta: { session_id: sessionId, type, tags: notes } })
+        ));
+        
+        setOpen(false);
+        setFiles([]);
+        setNotes("");
+        toast.success(`${files.length} evidencia(s) cargada(s) exitosamente`);
+        if (sessionStatus === "Draft") {
+          updateSession.mutate({ status: "Capturing" });
         }
-      );
+      } catch (err: any) {
+        toast.error(err.message || "Error al cargar las evidencias");
+      } finally {
+        setIsUploading(false);
+      }
     } else if (type === "rtmp") {
       toast.error("RTMP stream en desarrollo");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setFile(null); setNotes(""); } }}>
+    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setFiles([]); setNotes(""); } }}>
       <DialogTrigger asChild>
         <Button variant={isPrimary ? "default" : "outline"}>
           <Upload className="h-4 w-4 mr-2" /> Cargar evidencia
@@ -691,16 +695,17 @@ function UploadEvidenceDialog({ isPrimary, sessionStatus }: { isPrimary?: boolea
             <div className="relative rounded border-2 border-dashed border-border p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer">
               <input 
                 type="file" 
+                multiple
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
                 onChange={handleFileChange}
                 accept={type === 'image' ? 'image/*,.webp,.tiff' : type === 'video' ? 'video/*' : 'application/pdf'}
               />
               <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
               <p className="mt-2 text-sm">
-                {file ? <span className="font-semibold text-primary">{file.name}</span> : "Arrastra archivos aquí o haz clic para seleccionar"}
+                {files.length > 0 ? <span className="font-semibold text-primary">{files.length} archivo(s) seleccionado(s)</span> : "Arrastra archivos aquí o haz clic para seleccionar"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Un archivo a la vez"}
+                {files.length > 0 ? `${(files.reduce((acc, f) => acc + f.size, 0) / 1024 / 1024).toFixed(2)} MB en total` : "Puedes subir varios archivos"}
               </p>
             </div>
           )}
@@ -715,9 +720,9 @@ function UploadEvidenceDialog({ isPrimary, sessionStatus }: { isPrimary?: boolea
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={uploadMutation.isPending}>Cancelar</Button>
-          <Button onClick={handleUpload} disabled={uploadMutation.isPending || (type !== "rtmp" && !file)}>
-            {uploadMutation.isPending ? "Cargando..." : "Cargar"}
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isUploading}>Cancelar</Button>
+          <Button onClick={handleUpload} disabled={isUploading || (type !== "rtmp" && files.length === 0)}>
+            {isUploading ? "Cargando..." : "Cargar"}
           </Button>
         </DialogFooter>
       </DialogContent>
