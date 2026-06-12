@@ -44,6 +44,7 @@ function PrintReport() {
       } else if (!isPreview) {
         setTimeout(() => window.print(), 1000);
       }
+      window.parent.postMessage({ type: 'REPORT_READY' }, '*');
       return;
     }
 
@@ -91,6 +92,9 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado.`;
         setAiSummary("Error de conexión al generar el resumen de IA.");
       } finally {
         setAiLoading(false);
+        // Let parent window know the report is ready
+        window.parent.postMessage({ type: 'REPORT_READY' }, '*');
+        
         // Wait for images to load before printing or downloading
         if (isDownload) {
           setTimeout(() => triggerPdfDownload(), 1500);

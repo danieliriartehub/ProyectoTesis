@@ -122,8 +122,19 @@ function SessionDetail() {
   const updateFinding = useUpdateFinding(sessionId);
 
   const [threshold, setThreshold] = useState(0.65);
+  const [reportReady, setReportReady] = useState(false);
 
   const updateSession = useUpdateSession(sessionId);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'REPORT_READY') {
+        setReportReady(true);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("infrainspect_settings");
@@ -526,10 +537,14 @@ function SessionDetail() {
         <TabsContent value="reports" className="mt-4 space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-lg">Vista Previa del Reporte de IA</h3>
-            <Button onClick={() => {
-              window.open(`/reports/print/${sessionId}?download=true`, "_blank");
-            }}>
-              <Download className="h-4 w-4 mr-2" /> Descargar PDF
+            <Button 
+              disabled={!reportReady}
+              onClick={() => {
+                window.open(`/reports/print/${sessionId}?download=true`, "_blank");
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" /> 
+              {reportReady ? "Descargar PDF" : "Generando insights..."}
             </Button>
           </div>
           <div className="border border-border rounded-lg overflow-hidden bg-white/5 relative">
