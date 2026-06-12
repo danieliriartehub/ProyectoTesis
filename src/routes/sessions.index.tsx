@@ -135,10 +135,19 @@ function SessionsList() {
                 </TableCell>
                 <TableCell><SessionStatusBadge status={s.status} /></TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 min-w-[120px]">
-                    <Progress value={s.progress} className="h-1.5 flex-1" />
-                    <span className="font-mono text-xs w-9 text-right">{s.progress}%</span>
-                  </div>
+                  {(() => {
+                    const progress = s.status === "Completed" ? 100 : s.status === "Review" ? 90 : s.status === "Processing" ? 60 : s.status === "Capturing" ? 30 : 10;
+                    return (
+                      <div className="flex items-center gap-2 min-w-[120px]">
+                        <Progress 
+                          value={progress} 
+                          className="h-1.5 flex-1" 
+                          indicatorClassName={progress === 100 ? "bg-[#22c55e]" : ""}
+                        />
+                        <span className="font-mono text-xs w-9 text-right">{progress}%</span>
+                      </div>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell className="text-right font-mono">{s.evidenceCount}</TableCell>
                 <TableCell className="text-right font-mono">
