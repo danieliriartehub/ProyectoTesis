@@ -63,6 +63,7 @@ function PrintReport() {
     if (!session) return;
 
     const generateSummary = async () => {
+      try {
         const getCategoryName = (cat: string) => (FINDINGS_TRANSLATIONS as any)[cat] || cat;
         
         const counts = findings.reduce((acc, f) => {
