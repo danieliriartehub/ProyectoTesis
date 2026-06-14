@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Radio, Copy, Check } from "lucide-react";
+import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 
 export default function LiveStreamView({ sessionId }: { sessionId: string }) {
@@ -149,6 +150,31 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
              isConnected && <div className="text-muted-foreground font-mono text-xs uppercase tracking-widest animate-pulse">Esperando señal de video...</div>
           )}
         </div>
+
+        <Accordion type="single" collapsible className="w-full mt-2">
+          <AccordionItem value="troubleshooting" className="border-border">
+            <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4" />
+                <span>¿Problemas de conexión con el dron? (Troubleshooting)</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-xs text-muted-foreground space-y-3 p-2 bg-muted/30 rounded-md">
+              <div className="space-y-1">
+                <strong className="text-foreground">1. El dron no conecta al RTMP:</strong>
+                <p>Si pruebas en una red local (WiFi), cambia "localhost" en la URL por la IP local de tu computadora (ej. 192.168.1.x). Asegúrate que el puerto 1935 no esté bloqueado por el Firewall.</p>
+              </div>
+              <div className="space-y-1">
+                <strong className="text-foreground">2. La web dice "Esperando señal..." pero el dron ya transmite:</strong>
+                <p>Verifica que copiaste la URL completa incluyendo el ID al final. También asegúrate de que el contenedor de Docker 'nginx-rtmp' esté corriendo.</p>
+              </div>
+              <div className="space-y-1">
+                <strong className="text-foreground">3. El video se ve muy lento o trabado (Lag):</strong>
+                <p>El procesamiento de Inteligencia Artificial consume recursos. Si no usas GPU, baja la resolución de transmisión del dron (ej. 720p) o reduce el bitrate en la app de DJI.</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
