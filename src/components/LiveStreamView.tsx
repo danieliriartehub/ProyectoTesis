@@ -23,6 +23,8 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   if (import.meta.env.VITE_RTMP_SERVER_URL) {
     // Si el usuario configuró explícitamente la URL del servidor RTMP (ej. en Vercel/Railway)
     baseRtmp = import.meta.env.VITE_RTMP_SERVER_URL;
+    // Evitar que duplique "/live" si el usuario lo incluyó en la variable
+    baseRtmp = baseRtmp.replace(/\/live\/?$/, '');
     // Asegurarse de que no termine en slash
     if (baseRtmp.endsWith('/')) baseRtmp = baseRtmp.slice(0, -1);
   } else if (import.meta.env.VITE_API_URL) {
