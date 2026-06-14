@@ -76,6 +76,7 @@ export const Route = createFileRoute("/sessions/$sessionId")({
 });
 
 const MapView = lazy(() => import("@/components/MapView"));
+const LiveStreamView = lazy(() => import("@/components/LiveStreamView"));
 
 const typeIcon: Record<EvidenceType, React.ComponentType<{ className?: string }>> = {
   image: ImageIcon,
@@ -302,6 +303,7 @@ function SessionDetail() {
         <TabsList className="font-mono uppercase tracking-widest text-[10px]">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="evidence">Evidencias ({evidence.length})</TabsTrigger>
+          <TabsTrigger value="live">Stream Dron</TabsTrigger>
           <TabsTrigger value="findings">Hallazgos ({findings.length})</TabsTrigger>
           <TabsTrigger value="jobs">Procesamiento IA</TabsTrigger>
           <TabsTrigger value="reports">Reportes</TabsTrigger>
@@ -405,6 +407,12 @@ function SessionDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="live" className="mt-4">
+          <Suspense fallback={<div className="p-12 text-center text-muted-foreground font-mono text-sm">Cargando visor...</div>}>
+            <LiveStreamView sessionId={sessionId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="findings" className="mt-4 space-y-3">
