@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle, RefreshCw, Camera } from "lucide-react";
+import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle, RefreshCw, Camera, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,8 +18,16 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const [copied, setCopied] = useState(false);
   const [reconnectTrigger, setReconnectTrigger] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [autoCapture, setAutoCapture] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const autoCaptureRef = useRef(autoCapture);
+  const lastCaptureTimeRef = useRef(0);
   const queryClient = useQueryClient();
+
+  // Sync ref with state for the WebSocket closure
+  useEffect(() => {
+    autoCaptureRef.current = autoCapture;
+  }, [autoCapture]);
 
   // Compute RTMP URL
   let baseRtmp = `rtmp://${window.location.hostname}:1935`;
@@ -64,7 +72,7 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
       setError(null);
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.frame) {
@@ -72,6 +80,17 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
         }
         if (data.detections) {
           setDetections(data.detections);
+          
+          // Lógica de Auto-Captura
+          if (autoCaptureRef.current && data.detections.length > 0 && data.frame) {
+            const now = Date.now();
+            const COOLDOWN_MS = 10000; // 10 segundos de cooldown
+            if (now - lastCaptureTimeRef.current > COOLDOWN_MS) {
+              lastCaptureTimeRef.current = now;
+              // Disparamos la subida en background
+              autoUploadFrame(data.frame, sessionId, queryClient);
+            }
+          }
         }
       } catch (e) {
         console.error("Failed to parse WS message", e);
@@ -98,6 +117,26 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
     setFrameData(null);
     setDetections([]);
     setReconnectTrigger(prev => prev + 1);
+  };
+
+  const autoUploadFrame = async (base64Frame: string, sid: string, qc: any) => {
+    try {
+      toast.info("Auto-captura detectó un hallazgo. Guardando...");
+      const res = await fetch(base64Frame);
+      const blob = await res.blob();
+      const file = new File([blob], `drone_autocapture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      await evidencesApi.upload(file, {
+        sessionId: sid,
+        type: 'image',
+        notes: 'Captura automática (Auto-Capture) por detección de IA en stream.'
+      });
+
+      await qc.invalidateQueries({ queryKey: ['session-evidences', sid] });
+      await qc.invalidateQueries({ queryKey: ['session-findings', sid] });
+    } catch (e) {
+      console.error("Error en auto-captura", e);
+    }
   };
 
   const handleCapture = async () => {
@@ -142,6 +181,20 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
             <h3 className="font-semibold text-lg uppercase tracking-wider font-mono">Drone Live Feed</h3>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant={autoCapture ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => {
+                setAutoCapture(!autoCapture);
+                if (!autoCapture) toast.success("Auto-captura activada (Cooldown: 10s)");
+                else toast.info("Auto-captura desactivada");
+              }} 
+              className={`h-7 px-3 text-xs ${autoCapture ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+              title="Tomar capturas automáticamente cuando se detecte daño"
+            >
+              <Zap className={`h-3.5 w-3.5 mr-1.5 ${autoCapture ? 'fill-current' : ''}`} />
+              Auto {autoCapture ? "ON" : "OFF"}
+            </Button>
             <Button 
               variant="default" 
               size="sm" 
