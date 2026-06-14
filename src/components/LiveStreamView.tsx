@@ -18,13 +18,20 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const wsRef = useRef<WebSocket | null>(null);
 
   // Compute RTMP URL
-  let rtmpHost = window.location.hostname;
-  if (import.meta.env.VITE_API_URL) {
+  let baseRtmp = `rtmp://${window.location.hostname}:1935`;
+  
+  if (import.meta.env.VITE_RTMP_SERVER_URL) {
+    // Si el usuario configuró explícitamente la URL del servidor RTMP (ej. en Vercel/Railway)
+    baseRtmp = import.meta.env.VITE_RTMP_SERVER_URL;
+    // Asegurarse de que no termine en slash
+    if (baseRtmp.endsWith('/')) baseRtmp = baseRtmp.slice(0, -1);
+  } else if (import.meta.env.VITE_API_URL) {
      try {
-       rtmpHost = new URL(import.meta.env.VITE_API_URL).hostname;
+       const host = new URL(import.meta.env.VITE_API_URL).hostname;
+       baseRtmp = `rtmp://${host}:1935`;
      } catch (e) {}
   }
-  const rtmpUrl = `rtmp://${rtmpHost}:1935/live/${sessionId}`;
+  const rtmpUrl = `${baseRtmp}/live/${sessionId}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rtmpUrl);
