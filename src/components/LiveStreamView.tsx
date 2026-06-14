@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle } from "lucide-react";
+import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,6 +14,7 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const [detections, setDetections] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [reconnectTrigger, setReconnectTrigger] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Compute RTMP URL
@@ -76,7 +77,15 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
     return () => {
       ws.close();
     };
-  }, [sessionId]);
+  }, [sessionId, reconnectTrigger]);
+
+  const handleRestart = () => {
+    setIsConnected(false);
+    setError(null);
+    setFrameData(null);
+    setDetections([]);
+    setReconnectTrigger(prev => prev + 1);
+  };
 
   return (
     <Card className="border border-border bg-black/5 shadow-inner">
@@ -86,9 +95,15 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
             <Radio className={`h-5 w-5 ${isConnected ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`} />
             <h3 className="font-semibold text-lg uppercase tracking-wider font-mono">Drone Live Feed</h3>
           </div>
-          <Badge variant={isConnected ? "default" : "secondary"} className={isConnected ? "bg-green-500 hover:bg-green-600" : ""}>
-            {isConnected ? "Live" : "Desconectado"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRestart} className="h-7 px-2 text-xs">
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Reiniciar
+            </Button>
+            <Badge variant={isConnected ? "default" : "secondary"} className={isConnected ? "bg-green-500 hover:bg-green-600" : ""}>
+              {isConnected ? "Live" : "Desconectado"}
+            </Badge>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md border border-border">
