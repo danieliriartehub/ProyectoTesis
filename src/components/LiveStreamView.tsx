@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle, RefreshCw } from "lucide-react";
+import { Loader2, Radio, Copy, Check, AlertCircle, HelpCircle, RefreshCw, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
+import { evidencesApi } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const [isConnected, setIsConnected] = useState(false);
@@ -15,7 +17,9 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [reconnectTrigger, setReconnectTrigger] = useState(0);
+  const [isCapturing, setIsCapturing] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const queryClient = useQueryClient();
 
   // Compute RTMP URL
   let baseRtmp = `rtmp://${window.location.hostname}:1935`;
@@ -96,6 +100,39 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
     setReconnectTrigger(prev => prev + 1);
   };
 
+  const handleCapture = async () => {
+    if (!frameData) {
+      toast.error("No hay señal de video para capturar");
+      return;
+    }
+
+    setIsCapturing(true);
+    try {
+      // Convert base64 to file
+      const res = await fetch(frameData);
+      const blob = await res.blob();
+      const file = new File([blob], `drone_snapshot_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Upload as evidence
+      await evidencesApi.upload(file, {
+        sessionId,
+        type: 'image',
+        notes: 'Captura manual desde el stream del dron en vivo.'
+      });
+
+      // Refetch evidences and findings
+      await queryClient.invalidateQueries({ queryKey: ['session-evidences', sessionId] });
+      await queryClient.invalidateQueries({ queryKey: ['session-findings', sessionId] });
+      
+      toast.success("¡Captura guardada! La IA analizará la imagen en segundo plano y aparecerá en Evidencias y Hallazgos.");
+    } catch (error: any) {
+      console.error("Error capturing frame", error);
+      toast.error(error.message || "Error al guardar la captura");
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
   return (
     <Card className="border border-border bg-black/5 shadow-inner">
       <CardContent className="p-4 flex flex-col gap-4">
@@ -105,6 +142,16 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
             <h3 className="font-semibold text-lg uppercase tracking-wider font-mono">Drone Live Feed</h3>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleCapture} 
+              disabled={!isConnected || !frameData || isCapturing}
+              className="h-7 px-3 text-xs bg-primary hover:bg-primary/90"
+            >
+              {isCapturing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Camera className="h-3.5 w-3.5 mr-1.5" />}
+              Capturar Hallazgo
+            </Button>
             <Button variant="outline" size="sm" onClick={handleRestart} className="h-7 px-2 text-xs">
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Reiniciar
