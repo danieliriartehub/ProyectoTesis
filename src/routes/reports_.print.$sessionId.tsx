@@ -6,6 +6,17 @@ import { FINDINGS_TRANSLATIONS } from "@/routes/sessions.$sessionId";
 // @ts-ignore
 import html2pdf from "html2pdf.js";
 
+interface AiReportData {
+  resumen_ejecutivo: string;
+  evaluacion_estructural: string;
+  analisis_detallado: Array<{
+    patologia: string;
+    observacion: string;
+    recomendacion_reparacion: string;
+    prioridad: string;
+  }>;
+}
+
 export const Route = createFileRoute("/reports_/print/$sessionId")({
   head: () => ({ meta: [{ title: "Reporte Técnico — InfraInspect AI" }] }),
   component: PrintReport,
@@ -17,8 +28,9 @@ function PrintReport() {
   const { data: evidence = [], isLoading: evidenceLoading } = useSessionEvidences(sessionId);
   const { data: findings = [], isLoading: findingsLoading } = useSessionFindings(sessionId);
 
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiSummary, setAiSummary] = useState<AiReportData | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   // Gemini AI summary logic
   useEffect(() => {
@@ -37,7 +49,7 @@ function PrintReport() {
     const isDownload = urlParams.get('download') === 'true';
 
     if (!geminiKey) {
-      setAiSummary("No se configuró una API Key de Gemini. El resumen automático no está disponible.");
+      setAiError("No se configuró una API Key de Gemini. El análisis inteligente no está disponible.");
       setAiLoading(false);
       if (isDownload) {
         setTimeout(() => triggerPdfDownload(), 1000);
@@ -51,59 +63,79 @@ function PrintReport() {
     if (!session) return;
 
     const generateSummary = async () => {
-      try {
+        const getCategoryName = (cat: string) => (FINDINGS_TRANSLATIONS as any)[cat] || cat;
+        
         const counts = findings.reduce((acc, f) => {
-          acc[f.category] = (acc[f.category] || 0) + 1;
+          const name = getCategoryName(f.category);
+          acc[name] = (acc[name] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
 
         const rejectedCount = findings.filter(f => f.status === "rejected").length;
 
-        const cacheKey = `ai_summary_${sessionId}_${evidence.length}_${findings.length}_${rejectedCount}`;
+        const cacheKey = `ai_summary_json_${sessionId}_${evidence.length}_${findings.length}_${rejectedCount}`;
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
-          setAiSummary(cached);
-          setAiLoading(false);
-          if (isDownload) {
-            setTimeout(() => { window.print(); }, 1500);
+          try {
+            setAiSummary(JSON.parse(cached));
+            setAiLoading(false);
+            if (isDownload) {
+              setTimeout(() => { window.print(); }, 2000);
+            }
+            return;
+          } catch(e) {
+            localStorage.removeItem(cacheKey);
           }
-          return;
         }
 
-        const prompt = `Actúa como un ingeniero estructural experto. Genera un resumen ejecutivo de máximo 3 párrafos para un reporte de inspección de la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}). 
+        const findingsDetails = findings.map(f => `- Defecto: ${getCategoryName(f.category)} | Severidad: ${f.severity} | Estado: ${f.status}`).join('\n');
+
+        const prompt = `Actúa como un ingeniero estructural experto. Evalúa la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}).
         
 Datos recolectados por IA:
 - Total de evidencias revisadas: ${evidence.length}
 - Total de hallazgos detectados: ${findings.length}
-- Hallazgos rechazados/validados manualmente: ${rejectedCount} rechazados
-- Tipos de defectos: ${JSON.stringify(counts)}
+- Hallazgos rechazados manualmente: ${rejectedCount}
+- Detalles de los defectos:
+${findingsDetails}
 
-Escribe en español, empleando terminología técnica y rigurosa propia de la ingeniería civil y patología estructural. 
-Tu respuesta debe contener exactamente tres partes:
-1. EVALUACIÓN: Una evaluación objetiva y técnica basada en la cantidad y tipos de defectos encontrados.
-2. RECOMENDACIONES: Sugerencias técnicas de mitigación, reparación o mantenimiento.
-3. MATERIALES Y ENSAYOS: Una lista de materiales estándar o ensayos normativos sugeridos para reparar estas patologías (Ej. Resina epóxica, Ensayo de ultrasonido).
+IMPORTANTE: DEBES DEVOLVER EXCLUSIVAMENTE UN OBJETO JSON VÁLIDO. No agregues markdown (\`\`\`) ni texto antes o después del JSON. Usa el siguiente formato estrictamente:
 
-NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con mayúsculas para los títulos.`;
+{
+  "resumen_ejecutivo": "Un párrafo gerencial resumiendo el estado general de la infraestructura.",
+  "evaluacion_estructural": "Un párrafo técnico y riguroso detallando la integridad del activo basado en las patologías.",
+  "analisis_detallado": [
+    {
+      "patologia": "Nombre de la patología o defecto principal",
+      "observacion": "Contexto y riesgo estructural específico de este defecto en esta infraestructura",
+      "recomendacion_reparacion": "Materiales recomendados y técnica constructiva de reparación o mitigación",
+      "prioridad": "Alta/Media/Baja"
+    }
+  ]
+}`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
           })
         });
 
         const data = await response.json();
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          const text = data.candidates[0].content.parts[0].text;
-          setAiSummary(text);
-          localStorage.setItem(cacheKey, text);
+          let text = data.candidates[0].content.parts[0].text;
+          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(text);
+          setAiSummary(parsed);
+          localStorage.setItem(cacheKey, JSON.stringify(parsed));
         } else {
-          setAiSummary("No se pudo generar el resumen. Verifica la clave API.");
+          setAiError("No se pudo generar el análisis. Verifica la clave API.");
         }
       } catch (error) {
-        setAiSummary("Error de conexión al generar el resumen de IA.");
+        console.error(error);
+        setAiError("Error de conexión al generar el análisis de IA.");
       } finally {
         setAiLoading(false);
         // Let parent window know the report is ready
@@ -222,19 +254,35 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con
           </div>
         </section>
 
-        {/* Resumen IA */}
+        {/* Resumen IA y Evaluación */}
         <section className="mb-12 no-break">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-6 border-b-2 border-slate-100 pb-2">
             <BrainCircuit className="h-6 w-6 text-primary" />
-            <h3 className="text-xl font-black uppercase tracking-tight text-slate-800">Resumen Experto (AI)</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight text-slate-800">Evaluación de Inteligencia Artificial</h3>
           </div>
-          <div className="p-6 bg-slate-50 border-l-4 border-primary shadow-sm">
-            {aiLoading ? (
-              <p className="text-slate-500 animate-pulse font-mono text-sm">Generando insights estructurales con Gemini AI...</p>
-            ) : (
-              <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap">{aiSummary}</div>
-            )}
-          </div>
+          
+          {aiLoading ? (
+            <div className="p-8 bg-slate-50 border border-slate-100 rounded-lg text-center">
+              <p className="text-slate-500 animate-pulse font-mono text-sm">Procesando patologías estructurales con Gemini AI...</p>
+            </div>
+          ) : aiError ? (
+            <div className="p-6 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">{aiError}</div>
+          ) : aiSummary ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-xl">
+                <h4 className="font-bold text-blue-900 uppercase tracking-wider text-xs mb-3 flex items-center gap-2">
+                  Resumen Ejecutivo
+                </h4>
+                <p className="text-slate-700 text-sm leading-relaxed">{aiSummary.resumen_ejecutivo}</p>
+              </div>
+              <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl">
+                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs mb-3 flex items-center gap-2">
+                  Dictamen Estructural
+                </h4>
+                <p className="text-slate-700 text-sm leading-relaxed">{aiSummary.evaluacion_estructural}</p>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         {/* Resumen Estadístico y Matriz de Severidad */}
@@ -282,6 +330,41 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con
           )}
         </section>
 
+        {/* Plan de Acción Detallado por Defecto */}
+        {aiSummary && aiSummary.analisis_detallado && aiSummary.analisis_detallado.length > 0 && (
+          <section className="page-break pb-8">
+            <header className="border-b-2 border-slate-200 pb-4 mb-8">
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Plan de Acción Sugerido (AI)</h2>
+              <p className="text-slate-500 text-sm font-mono mt-1">Directrices de mantenimiento basadas en la patología estructural detectada</p>
+            </header>
+
+            <div className="space-y-6">
+              {aiSummary.analisis_detallado.map((defecto, idx) => (
+                <div key={idx} className="no-break border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                  <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+                    <h4 className="font-black text-slate-800 uppercase tracking-wide text-lg">{defecto.patologia}</h4>
+                    <span className={`px-3 py-1 text-xs font-black uppercase tracking-widest rounded-full 
+                      ${defecto.prioridad.toLowerCase().includes('alta') ? 'bg-red-100 text-red-700' : 
+                        defecto.prioridad.toLowerCase().includes('media') ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                      Prioridad: {defecto.prioridad}
+                    </span>
+                  </div>
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Análisis de Riesgo</p>
+                      <p className="text-sm text-slate-700 leading-relaxed">{defecto.observacion}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Estrategia de Intervención</p>
+                      <p className="text-sm text-slate-700 leading-relaxed bg-blue-50/50 p-4 rounded-lg border border-blue-100/50">{defecto.recomendacion_reparacion}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Anexo Fotográfico */}
         {findings.length > 0 && (
           <section className="page-break">
@@ -321,8 +404,8 @@ NO devuelvas markdown ni asteriscos de negrita, usa texto plano estructurado con
                         <span className={`inline-block px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded ${labelColor}`}>
                           {isRejected ? "RECHAZADO" : "VALIDADO"}
                         </span>
-                        <p className={`text-xs font-mono font-bold mt-2 ${f.severity === 'critical' ? 'text-red-600' : 'text-slate-500'}`}>
-                          SEV: {f.severity.toUpperCase()}
+                        <p className={`text-[10px] font-mono font-bold mt-2 px-2 py-1 bg-slate-100 rounded border border-slate-200 ${f.severity === 'critical' ? 'text-red-600' : 'text-slate-500'}`}>
+                          SEVERIDAD: {f.severity.toUpperCase()}
                         </p>
                       </div>
                     </div>
