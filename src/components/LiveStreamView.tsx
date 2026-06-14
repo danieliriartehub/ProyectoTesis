@@ -1,14 +1,34 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Radio } from "lucide-react";
+import { Loader2, Radio, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export default function LiveStreamView({ sessionId }: { sessionId: string }) {
   const [isConnected, setIsConnected] = useState(false);
   const [frameData, setFrameData] = useState<string | null>(null);
   const [detections, setDetections] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Compute RTMP URL
+  let rtmpHost = window.location.hostname;
+  if (import.meta.env.VITE_API_URL) {
+     try {
+       rtmpHost = new URL(import.meta.env.VITE_API_URL).hostname;
+     } catch (e) {}
+  }
+  const rtmpUrl = `rtmp://${rtmpHost}:1935/live/${sessionId}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(rtmpUrl);
+    setCopied(true);
+    toast.success("URL RTMP copiada al portapapeles");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     // Determine WS URL based on current host or environment variable
@@ -69,6 +89,26 @@ export default function LiveStreamView({ sessionId }: { sessionId: string }) {
           </Badge>
         </div>
         
+        <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md border border-border">
+          <div className="flex-1">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">URL de Transmisión (Ingresar en el control DJI)</div>
+            <Input 
+              value={rtmpUrl} 
+              readOnly 
+              className="h-8 font-mono text-xs bg-background" 
+            />
+          </div>
+          <Button 
+            variant="secondary" 
+            size="icon" 
+            className="h-8 w-8 shrink-0 mt-5" 
+            onClick={handleCopy}
+            title="Copiar enlace RTMP"
+          >
+            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+          </Button>
+        </div>
+
         <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-border flex items-center justify-center shadow-xl">
           {!isConnected && !error && (
             <div className="flex flex-col items-center text-muted-foreground">
