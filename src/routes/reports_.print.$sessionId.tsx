@@ -90,7 +90,7 @@ function PrintReport() {
 
         const findingsDetails = findings.map(f => `- Defecto: ${getCategoryName(f.category)} | Severidad: ${f.severity} | Estado: ${f.status}`).join('\n');
 
-        const prompt = `Actúa como un ingeniero estructural experto. Evalúa la infraestructura "${session.title}" (Tipo: ${session.infrastructure.type}).
+        const prompt = `Eres la Inteligencia Artificial de la plataforma "InfraInspect AI", un asistente técnico especializado en inspección de infraestructuras. Analiza los hallazgos de la inspección "${session.title}" (Tipo: ${session.infrastructure.type}).
         
 Datos recolectados por IA:
 - Total de evidencias revisadas: ${evidence.length}
@@ -102,13 +102,13 @@ ${findingsDetails}
 IMPORTANTE: DEBES DEVOLVER EXCLUSIVAMENTE UN OBJETO JSON VÁLIDO. No agregues markdown (\`\`\`) ni texto antes o después del JSON. Usa el siguiente formato estrictamente:
 
 {
-  "resumen_ejecutivo": "Un párrafo gerencial resumiendo el estado general de la infraestructura.",
-  "evaluacion_estructural": "Un párrafo técnico y riguroso detallando la integridad del activo basado en las patologías.",
+  "resumen_ejecutivo": "Un párrafo general resumiendo el estado de la infraestructura.",
+  "evaluacion_estructural": "Un párrafo técnico detallando la condición física del activo basado en las patologías detectadas.",
   "analisis_detallado": [
     {
-      "patologia": "Nombre de la patología o defecto principal",
-      "observacion": "Contexto y riesgo estructural específico de este defecto en esta infraestructura",
-      "recomendacion_reparacion": "Materiales recomendados y técnica constructiva de reparación o mitigación",
+      "patologia": "Nombre del defecto principal",
+      "observacion": "Contexto y nivel de riesgo de este defecto",
+      "recomendacion_reparacion": "Materiales y técnica de mantenimiento o mitigación recomendada",
       "prioridad": "Alta/Media/Baja"
     }
   ]
@@ -277,7 +277,7 @@ IMPORTANTE: DEBES DEVOLVER EXCLUSIVAMENTE UN OBJETO JSON VÁLIDO. No agregues ma
               </div>
               <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl">
                 <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs mb-3 flex items-center gap-2">
-                  Dictamen Estructural
+                  Evaluación Técnica
                 </h4>
                 <p className="text-slate-700 text-sm leading-relaxed">{aiSummary.evaluacion_estructural}</p>
               </div>
@@ -334,8 +334,8 @@ IMPORTANTE: DEBES DEVOLVER EXCLUSIVAMENTE UN OBJETO JSON VÁLIDO. No agregues ma
         {aiSummary && aiSummary.analisis_detallado && aiSummary.analisis_detallado.length > 0 && (
           <section className="page-break pb-8">
             <header className="border-b-2 border-slate-200 pb-4 mb-8">
-              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Plan de Acción Sugerido (AI)</h2>
-              <p className="text-slate-500 text-sm font-mono mt-1">Directrices de mantenimiento basadas en la patología estructural detectada</p>
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Recomendaciones de Mantenimiento (IA)</h2>
+              <p className="text-slate-500 text-sm font-mono mt-1">Directrices sugeridas por InfraInspect AI basadas en los defectos detectados</p>
             </header>
 
             <div className="space-y-6">
